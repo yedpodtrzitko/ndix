@@ -3,6 +3,9 @@
 
     Author: yed_
 
+    0.8     migrating to SM 1.7
+            add whitelisting
+
     0.7     fixed the loophole for Armoury
 
     0.6     cleaned some shit
@@ -31,8 +34,9 @@
 #include <sourcemod>
 #include <sdktools>
 #include <colors>
+#include <smlib>
 
-#define PLUGIN_VERSION "0.7.0"
+#define PLUGIN_VERSION "0.7.1"
 #define DEBUG 0
 
 #define TEAM_CON 2
@@ -52,6 +56,9 @@ new CurrentCount[4] = {0,0,0};
 new LimitValue[4] = {0,0,0};
 new Handle:h_Enabled;
 new Handle:h_Limit;
+
+new const String:AllowedPlayers[][] = {
+};
 
 public Plugin:myinfo = {
     name = "Sniper Limiter",
@@ -84,13 +91,13 @@ public OnMapStart() {
 }
 
 RecountClasses(client) {
-    new client_team = GetClientTeam(client);
-    new cls = 0
-    new subcls = 0;
-    new recalced = 0;
+    int client_team = GetClientTeam(client);
+    int cls = 0
+    int subcls = 0;
+    int recalced = 0;
 
-    for (new i=1; i<=MaxClients; i++) {
-        if (IsClientInGame(i) && IsValidClient(i)) {
+    LOOP_CLIENTS(i, CLIENTFILTER_INGAME | CLIENTFILTER_NOBOTS) {
+        if (IsValidClient(i)) {
             if (client_team == GetClientTeam(i)) {
                 cls = m_iDesiredPlayerClass(i);
                 subcls = m_iDesiredPlayerSubclass(i);
@@ -113,15 +120,18 @@ public Action:Event_ChangeClass(Handle:event, const String:name[], bool:dontBroa
         return Plugin_Continue;
     }
 
-    new client = GetClientOfUserId(GetEventInt(event, "userid"));
-    new cls = GetEventInt(event, "class");
-    new subcls = GetEventInt(event, "subclass");
+    int client = GetClientOfUserId(GetEventInt(event, "userid"));
+    int cls = GetEventInt(event, "class");
+    int subcls = GetEventInt(event, "subclass");
 
     #if DEBUG == 1
         PrintToChat(client, "chosen %i - %i", cls, subcls);
     #endif
 
     RecountClasses(client);
+    if (IsAllowedPlayer(client)) {
+        return Plugin_Continue;
+    }
 
     if (IsSniperClass(cls, subcls)) {
         #if DEBUG == 1
@@ -137,14 +147,21 @@ public Action:Event_ChangeClass(Handle:event, const String:name[], bool:dontBroa
     return Plugin_Continue;
 }
 
+IsAllowedPlayer(client) {
+    char playerId[32];
+    GetClientAuthId(client, AuthId_Steam2, playerId, sizeof(playerId));
+    PrintToServer("array pos %d", Array_FindString(AllowedPlayers, sizeof(AllowedPlayers), playerId));
+    return Array_FindString(AllowedPlayers, sizeof(AllowedPlayers), playerId) != -1;
+}
+
 public Action:Event_PlayerDied(Handle:event, const String:name[], bool:dontBroadcast) {
     if (GetConVarInt(h_Enabled) != 1 ) {
         return Plugin_Continue;
     }
 
-    new client = GetClientOfUserId(GetEventInt(event, "userid"));
-    new cls = m_iDesiredPlayerClass(client);
-    new subcls = m_iDesiredPlayerSubclass(client);
+    int client = GetClientOfUserId(GetEventInt(event, "userid"));
+    int cls = m_iDesiredPlayerClass(client);
+    int subcls = m_iDesiredPlayerSubclass(client);
 
     #if DEBUG == 1
         PrintToChat(client, "chosen %i - %i", cls, subcls);
@@ -153,6 +170,10 @@ public Action:Event_PlayerDied(Handle:event, const String:name[], bool:dontBroad
     RecountClasses(client);
 
     if (IsSniperClass(cls, subcls)) {
+        if (IsAllowedPlayer(client)) {
+            return Plugin_Continue;
+        }
+
         if (IsTooMuchSnipers(client)) {
             ResetClass(client);
             return Plugin_Continue;
@@ -180,11 +201,11 @@ public Action:CMD_ChangeSnipersLimit(client, args) {
 
     decl String:strteam[32];
     GetCmdArg(1, strteam, sizeof(strteam));
-    new team = StringToInt(strteam);
+    int team = StringToInt(strteam);
 
     decl String:strvalue[32];
     GetCmdArg(2, strvalue, sizeof(strvalue));
-    new value = StringToInt(strvalue);
+    int value = StringToInt(strvalue);
 
     ChangeSnipersLimit(client, team+2, value);
     return Plugin_Handled;
@@ -199,11 +220,11 @@ public Action:CMD_ChangeTeamSnipersLimit(client, args) {
         return Plugin_Handled;
     }
 
-    new client_team = GetClientTeam(client);
+    int client_team = GetClientTeam(client);
 
-       #if DEBUG == 1
-            PrintToChat(client, "client team %i", client_team);
-        #endif
+    #if DEBUG == 1
+        PrintToChat(client, "client team %i", client_team);
+    #endif
 
     if (client_team < 2) {
         return Plugin_Handled;
@@ -221,12 +242,11 @@ public Action:CMD_ChangeTeamSnipersLimit(client, args) {
 
     decl String:strvalue[32];
     GetCmdArg(1, strvalue, sizeof(strvalue));
-    new value = StringToInt(strvalue);
+    int value = StringToInt(strvalue);
 
-        #if DEBUG == 1
-            PrintToChat(client, "acount to change");
-        #endif
-
+    #if DEBUG == 1
+        PrintToChat(client, "acount to change");
+    #endif
 
     ChangeSnipersLimit(client, client_team, value);
     return Plugin_Handled;
@@ -237,7 +257,7 @@ public Action:CMD_ChangeTeamSnipersLimit(client, args) {
 
 // HELPER FUNCTIONS
 IsTooMuchSnipers(client) {
-    new client_team = GetClientTeam(client);
+    int client_team = GetClientTeam(client);
 
     #if DEBUG == 1
         PrintToChat(client, "current %i, allowed %i, team %i",  CurrentCount[client_team], LimitValue[client_team], client_team);
@@ -292,20 +312,6 @@ ChangeSnipersLimit(client, team, value)
     #if DEBUG == 1
     	PrintToChat(client, "limit set to %i for %i", value, team);
     #endif
-
-    /* TODO - announce the change to your team only
-    for (new i=1; i<=MaxClients; i++) {
-        if (IsClientInGame(i) && IsValidClient(i)) {
-            if (client_team == GetClientTeam(i)) {
-                cls = m_iDesiredPlayerClass(i);
-                subcls = m_iDesiredPlayerSubclass(i);
-                if (IsSniperClass(cls, subcls)) {
-                    recalced++;
-                }
-            }
-        }
-    }
-    */
 
 	decl String:teamName[16];
 	PrintToChat(client, "[NDix] %s: snipers limit set to %i", GetTeamName(team, teamName, 16), value);
