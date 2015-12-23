@@ -11,6 +11,7 @@
 
 
 #include <sourcemod>
+#include <sdktools>
 #include <sdkhooks>
 
 #define PLUGIN_VERSION "0.2.0"
@@ -272,8 +273,7 @@ public Action:CheckBorders(Handle timer, any entity) {
         }
 
         if (tmpAxisViolated && (tmpAxisCount == tmpAxisViolated)) {
-            SetEntProp(entity, Prop_Send, "m_iMaxHealth", 1.0);
-            SDKHooks_TakeDamage(entity, entity, entity, 5001.0, DMG_SLASH, -1, position, position);
+            AcceptEntityInput(entity, "Kill");
         }
     }
 }
