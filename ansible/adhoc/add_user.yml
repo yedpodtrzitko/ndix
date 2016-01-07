@@ -1,0 +1,25 @@
+---
+- name: Add User
+  hosts: nd
+  sudo: yes
+  vars:
+    users:
+      - holyfather
+      - yed
+      - jdduck
+
+  tasks:
+    - name: create user
+      user: createhome=yes
+            home=/home/{{ item }}
+            name={{ item }}
+            state=present
+            shell=/bin/bash
+            groups=sudo
+
+      with_items: users
+
+    - authorized_key: user={{ item }}
+                      key="{{ lookup('file', './keys/' + item + '.pub') }}"
+
+      with_items: users

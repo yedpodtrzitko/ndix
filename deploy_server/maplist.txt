@@ -1,0 +1,13 @@
+clocktower
+downtown
+hydro
+metro
+oasis
+silo
+corner_intermediate_04
+coast
+nuclear_forest02
+koth_plaza
+gate
+sk_WolfEye
+metro2a

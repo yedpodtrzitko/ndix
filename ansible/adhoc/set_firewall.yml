@@ -1,0 +1,30 @@
+---
+- name: Set Firewall
+  hosts: nd
+  sudo: yes
+
+  tasks:
+    - name: Add Srcds iptable rule
+      command: /sbin/iptables {{ item }}
+      with_items:
+        - -F
+        - -I INPUT 1 -p tcp --destination-port 27015 -j LOG --log-prefix "SRCDS-RCON " -m limit --limit 1/m --limit-burst 1
+        - -I INPUT 1 -p tcp --destination-port 27015 -j DROP
+        - -I INPUT 1 -p udp --dport 27015 -m length --length 0:32 -j LOG --log-prefix "SRCDS-XSQUERY " --log-ip-options -m limit --limit 1/m --limit-burst 1
+        - -I INPUT 1 -p udp --dport 27015 -m length --length 0:32 -j DROP
+        - -I INPUT 1 -s 92.20.41.0/16 -p udp --dport 27015 -j ACCEPT
+        - -I INPUT 1 -s 92.20.41.0/16 -p tcp --dport 27015 -j ACCEPT
+        - -I INPUT 1 -s 88.105.0.0/16 -p udp --dport 27015 -j ACCEPT
+        - -I INPUT 1 -s 88.105.0.0/16 -p tcp --dport 27015 -j ACCEPT
+        - -I INPUT 1 -s 2.96.44.0/16 -p udp --dport 27015 -j ACCEPT
+        - -I INPUT 1 -s 2.96.44.0/16 -p tcp --dport 27015 -j ACCEPT
+        - -I INPUT 1 -s 82.32.27.156/24 -p udp --dport 27015 -j ACCEPT
+        - -I INPUT 1 -s 82.32.27.156/24 -p tcp --dport 27015 -j ACCEPT
+
+    - name: save iptables
+      command: iptables-save
+      sudo: true
+
+    - name: restart iptables
+      service: name=ufw state=restarted
+      sudo: true

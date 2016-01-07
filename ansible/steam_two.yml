@@ -1,0 +1,62 @@
+---
+- name: Bootstrap ND server
+  hosts: nd
+  sudo: yes
+  sudo_user: steam
+
+  vars:
+    mirror: http://www.gsptalk.com/mirror/sourcemod/
+    sourcemod: sourcemod-1.7.1-linux.tar.gz
+    metamod: mmsource-1.10.4-linux.tar.gz
+    steamcmd: http://media.steampowered.com/installer/steamcmd_linux.tar.gz
+
+  tasks:
+    - name: prepare dirs
+      file: path={{ item }} state=directory owner=steam
+      with_items:
+        - /home/steam/tmp/nd
+        - /home/steam/bin
+        - /home/steam/.steam/sdk32
+
+    - name: get Steamcmd
+      get_url: dest=/home/steam/bin/ url={{ steamcmd }}
+
+    - name: get Metamod
+      get_url: dest=/home/steam/tmp/ url={{ mirror }}{{ metamod }}
+
+    - name: get SourceMod
+      get_url: dest=/home/steam/tmp/ url={{ mirror }}{{ sourcemod }}
+
+    - name: install Steamcmd
+      shell: tar xzf /home/steam/bin/steamcmd_linux.tar.gz -C /home/steam/bin
+
+    - name: install ND server
+      register: nd_downloaded
+      shell: /home/steam/bin/steamcmd.sh +login anonymous +force_install_dir /home/steam/nd +app_update 111710 validate +quit
+      ignore_errors: yes
+      retries: 2
+      # until: nd_downloaded|success
+      # this has to run twice, idk why .(
+
+    - name: install ND server II
+      register: nd_downloaded
+      shell: /home/steam/bin/steamcmd.sh +login anonymous +force_install_dir /home/steam/nd +app_update 111710 validate +quit
+      ignore_errors: yes
+      retries: 2
+      # until: nd_downloaded|success
+      # this has to run twice, idk why .(
+
+    - name: copy steamclient.so
+      shell: cp /home/steam/bin/linux32/steamclient.so /home/steam/.steam/sdk32/steamclient.so
+               creates=/home/steam/.steam/sdk32/steamclient.so
+
+    - name: install Metamod
+      shell: tar xzf /home/steam/tmp/{{ sourcemod }} -C /home/steam/nd/nucleardawn
+      # TODO - if file not exists
+
+    - name: install Sourcemod
+      shell: tar xzf /home/steam/tmp/{{ metamod }} -C /home/steam/nd/nucleardawn
+      # TODO - if file not exists
+
+    - name: start server
+      shell: circusctl start ndserver

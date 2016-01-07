@@ -1,0 +1,68 @@
+﻿"Phrases"
+{
+	"Surrender"
+	{
+		"en"			"Surrender?"
+	}
+
+	"Start Surrender"
+	{
+		"en"			"A surrender vote has begun."
+	}
+
+	"Surrender Failed"
+	{
+		"en"			"Surrender vote failed."
+	}
+
+	"Mutiny"
+	{
+		"en"			"Demote your commander?"
+	}
+
+	"Start Mutiny"
+	{
+		"en"			"A mutiny vote has begun."
+	}
+
+	"Mutiny Succeded"
+	{
+		"en"			"Mutiny vote succeded."
+	}
+
+	"Mutiny Failed"
+	{
+		"en"			"Mutiny vote failed."
+	}
+	
+	"Commander Only"
+	{
+		"en"			"Only commanders may start surrender votes."
+	}
+
+	"Vote In Progress"
+	{
+		"en"			"Please Wait: A vote is already in progress."
+	}
+
+	"Not Enough Time"
+	{
+		"en"			"Please Wait: Not enough time has passed since the last vote."
+	}
+
+	"Too Few Players"
+	{
+		"#format"		"{1:d}"
+		"en"			"Need {1} players to vote."
+	}
+
+	"Yes"
+	{
+		"en"			"Yes"
+	}
+
+	"No"
+	{
+		"en"			"No"
+	}
+}

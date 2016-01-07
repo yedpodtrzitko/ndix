@@ -1,0 +1,36 @@
+deployment scripts using Ansible:
+
+1) install ansible
+2) run playbook
+3) ???
+4) PROFIT!!!!
+
+
+1) install Ansible
+- install ansible via pip (pip is Python tool)
+pip install ansible
+
+- create ansible hosts file
+cat > /etc/ansible/hosts
+[nd]
+our-nd-server-ips
+^D
+
+2) run playbook
+depends what do you need to do:
+
+ansible-playbook linux_one.yml -vvvv
+^ runs very verbose script configuring linux machine for some details
+has to be run only once
+this is semi-automatic, creates users and shit.
+It's recommanded to disable root ssh login + change ssh port
+
+ansible-playbook steam_two.yml -vvvv
+^ install vanilla ND server
+has to be run only once
+
+ansible-playbook update.yml
+^ update ND server via our plugins pack
+has to be run every time you want to update the server
+NOTE: this plugin is not done yet, use ./deploy.sh for now
+

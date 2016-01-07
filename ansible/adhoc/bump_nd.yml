@@ -1,0 +1,12 @@
+---
+- name: Bump ND server
+  hosts: nd
+  sudo: yes
+  sudo_user: steam
+
+  tasks:
+    - name: bump ND server
+      shell: /home/steam/bin/steamcmd.sh +login anonymous +force_install_dir /home/steam/nd +app_update 111710 validate +quit
+      retries: 2
+      # until: nd_downloaded|success
+      # this has to run twice, idk why .(

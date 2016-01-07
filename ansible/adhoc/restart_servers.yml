@@ -1,0 +1,8 @@
+---
+- name: Restart servers
+  hosts: nd
+  sudo: yes
+
+  tasks:
+      - name: restart ND server
+        shell: circusctl restart ndserver

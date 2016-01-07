@@ -1,0 +1,52 @@
+- name: Bump Sourcemod
+  hosts: nd
+  sudo: yes
+  sudo_user: steam
+
+  vars:
+    home: /home/steam/
+    mm_mirror: http://www.gsptalk.com/mirror/sourcemod/
+    mm_file: mmsource-1.10.5-linux.tar.gz
+    sm_mirror: http://sourcemod.gameconnect.net/files/
+    sm_file: sourcemod-1.7.2-linux.tar.gz
+    smlib_mirror: https://codeload.github.com/bcserv/smlib/zip/
+    smlib_file: 5dc9e08b5a2ead415e12ab602f6c4c8bb5dd0409
+    nd_dir: "{{ home }}/nd/nucleardawn/"
+
+  tasks:
+    - name: mkdir tmp
+      file: path="{{ home }}tmp/" state=directory owner=steam
+
+    - name: get Metamod
+      get_url: dest="{{ home }}tmp/" url={{ mm_mirror }}{{ mm_file }}
+
+    - name: get SourceMod
+      get_url: dest="{{ home }}tmp/" url={{ sm_mirror }}{{ sm_file }}
+
+    - name: get SMLIB
+      get_url: dest="{{ home}}tmp/" url={{ smlib_mirror }}{{ smlib_file }}
+
+    - name: delete old backup
+      shell: rm -Rf {{ nd_dir }}addons_
+
+    - name: backup current
+      shell: mv {{ nd_dir }}addons {{ nd_dir }}addons_
+
+    - name: install Metamod
+      shell: tar xzf "{{ home }}tmp/{{ mm_file }}" -C "{{ nd_dir }}"
+      # TODO - if file not exists
+
+    - name: install Sourcemod
+      shell: tar xzf "{{ home }}tmp/{{ sm_file }}" -C "{{ nd_dir }}"
+
+    - name: get SMLIB
+      unarchive: copy=no src="{{ home }}tmp/smlib-{{ smlib_file }}.zip" dest="{{ home}}tmp/"
+
+    - name: unpack
+      shell: >
+        cp -r
+        "{{ home }}tmp/smlib-{{ smlib_file }}/{{ item }}"
+        "{{ nd_dir }}/addons/sourcemod/"
+      with_items:
+        - gamedata
+        - scripting

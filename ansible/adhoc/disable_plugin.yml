@@ -1,0 +1,14 @@
+---
+- name: Disable Plugin
+  hosts: nd
+  sudo: yes
+  sudo_user: steam
+  
+  vars:
+    ppath: /home/steam/nd/nucleardawn/addons/sourcemod/plugins/
+
+  tasks:
+    - name: disable plugin
+      command: mv path={{ ppath }}{{ item }} {{ ppath }}disabled/{{ item }}
+      with_items:
+        - smac_commands.sp

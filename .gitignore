@@ -1,0 +1,3 @@
+ansible/hosts/_all
+server_cfg/*/server.password
+server_cfg/*/server.cfg

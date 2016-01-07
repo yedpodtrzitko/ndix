@@ -1,0 +1,29 @@
+---
+- name: Get maps
+  hosts: nd
+  sudo: yes
+  sudo_user: steam
+
+  vars:
+    fastdl: http://nd.vanyli.net/maps/
+
+  tasks:
+    - name: download maps
+      get_url: dest=/home/steam/nd/nucleardawn/maps url={{ fastdl }}{{ item }}
+      with_items:
+        - frost.bsp.bz2
+        - koth_plaza.bsp.bz2
+        - sk_WolfEye.bsp.bz2
+        - corner_intermediate_04.bsp.bz2
+        - nuclear_forest02.bsp.bz2
+        - metro2a.bsp.bz2
+
+    - name: install maps
+      shell: bunzip2 /home/steam/nd/nucleardawn/maps/{{ item }}
+      with_items:
+        - frost.bsp.bz2
+        - koth_plaza.bsp.bz2
+        - sk_WolfEye.bsp.bz2
+        - corner_intermediate_04.bsp.bz2
+        - nuclear_forest02.bsp.bz2
+        - metro2a.bsp.bz2

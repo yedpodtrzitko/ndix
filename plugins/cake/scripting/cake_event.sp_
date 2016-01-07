@@ -1,0 +1,373 @@
+/*
+    Cake Collecting Event
+
+    0.1     initial version
+
+*/
+
+
+#include <sourcemod>
+#include <sdkhooks>
+#include <sdktools>
+
+
+#define PLUGIN_VERSION "0.1.0"
+#define DEBUG 0
+
+enum Bools {
+    Enabled,
+}
+
+enum Ints {
+    WinCount,
+}
+
+enum Handles {
+    Handle:Enabled,
+    Handle:WinCount,
+}
+
+new g_Handle[Handles] = {INVALID_HANDLE, ...},
+    bool:g_Bools[Bools],
+    g_Ints[Ints];
+
+new Handle:CAKES = INVALID_HANDLE;
+new TeamCakes[4] = {0, ...};
+
+public Plugin:myinfo = {
+    name = "Cake Collecting Event",
+    author = "yed_",
+    description = "The cake is NOT a lie",
+    version = PLUGIN_VERSION,
+    url = "http://ndix.vanyli.net"
+}
+
+public OnPluginStart() {
+    CreateConVar("sm_cake_event_version", PLUGIN_VERSION, "ND CakeEvent Version", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_NOTIFY|FCVAR_DONTRECORD);
+
+    g_Handle[Enabled] = CreateConVar("sm_cake_event_enabled", "1", "Flag to (de)activate the plugin");
+    g_Bools[Enabled] = GetConVarBool(g_Handle[Enabled]);
+    HookConVarChange(g_Handle[Enabled], OnCVarChange);
+
+    g_Handle[WinCount] = FindConVar("nd_skirmish_limit");
+    g_Ints[WinCount] = GetConVarInt(g_Handle[WinCount]);
+    HookConVarChange(g_Handle[WinCount], OnCVarChange);
+
+    CAKES = CreateArray(1);
+
+    //RegAdminCmd("admin_ecake", CMD_EventCake, ADMFLAG_BAN);
+    RegConsoleCmd("sm_ecake", CMD_EventCake);
+    //RegAdminCmd("admin_resetcakes", CMD_ResetCakes, ADMFLAG_BAN);
+    RegConsoleCmd("sm_resetcakes", CMD_ResetCakes);
+
+    //HookEvent("round_start", GameStart);
+}
+
+public OnMapStart() {
+    if (!g_Bools[Enabled]) {
+        return;
+    }
+
+    AddFileToDownloadsTable("materials/models/cakehat/cakehat.vmt");
+    AddFileToDownloadsTable("materials/models/cakehat/cakehat.vtf");
+    AddFileToDownloadsTable("materials/models/cakehat/cakehat_exp.vtf");
+    AddFileToDownloadsTable("materials/models/cakehat/cakehat_n.vtf");
+    AddFileToDownloadsTable("models/cakehat/cakehat.phy");
+    AddFileToDownloadsTable("models/cakehat/cakehat.vvd");
+    AddFileToDownloadsTable("models/cakehat/cakehat.dx80.vtx");
+    AddFileToDownloadsTable("models/cakehat/cakehat.dx90.vtx");
+    AddFileToDownloadsTable("models/cakehat/cakehat.sw.vtx");
+    AddFileToDownloadsTable("models/cakehat/cakehat.mdl");
+
+    PrecacheModel("models/cakehat/cakehat.mdl", true);
+}
+
+public RemoveCakes() {
+    new cakes_count = GetArraySize(CAKES);
+    new any:ck;
+    for (new i=(cakes_count-1); i>=0; i--) {
+        ck = GetArrayCell(CAKES, i);
+        RemoveCake(ck);
+    }
+}
+
+public OnPluginEnd() {
+    RemoveCakes();
+}
+
+/*
+public Action:GameStart(Handle:Event, const String:Name[], bool:Broadcast) {
+    PrintToServer("game start");
+    CMD_ResetCakes(0, INVALID_HANDLE);
+}
+*/
+
+public Action:CMD_ResetCakes(client, args) {
+    if (!g_Bools[Enabled]) {
+        return;
+    }
+
+    decl String:map[64];
+    GetCurrentMap(map, sizeof(map));
+
+    RemoveCakes();
+    for (new i=0; i<4; i++) {
+        TeamCakes[i] = 0;
+    }
+
+    if (StrEqual(map, "sk_metro")) {
+        HandleSKMetro();
+    }
+}
+
+HandleSKMetro() {
+    //EMP - unreachable in base
+    SpawnEventCake(-346.404907, 1992.006469, 7.217872);
+    //EMP - unreachable close to west passage to base
+    SpawnEventCake(-2204.721923, 1025.908569, 12.489608);
+
+    //EMP #1 pillar close to Emp entrance into center building
+    SpawnEventCake(-395.432861 ,734.139892 ,32.226455);
+
+    //EMP #2 on the first floor on the Emp side
+    SpawnEventCake(327.918853, 118.333534, 208.031250);
+
+    //EMP #3 above the emp entrance
+    SpawnEventCake(5.176807 ,785.905334 ,164.134078);
+
+    //EMP #4 entrance to the subway
+    SpawnEventCake(1551.177490 ,537.488769 ,-255.968750);
+
+    //EMP #5 sniper post close to Emp's base
+    SpawnEventCake(687.092590 ,801.330322 ,464.031250);
+
+    //EMP #6 1st floor, empires side-between levels-right of pillars
+    SpawnEventCake(525.200500 ,-442.266357 ,344.031250);
+
+    //EMP #7 east exit from prime, corner
+    SpawnEventCake(709.957397, -540.097656, 13.091117);
+
+    //EMP #8 roof of entry stall to subway
+    SpawnEventCake(279.710998, 591.712646, 104.894355);
+
+    //EMP #9 top fllor close to the sniper post toward prime from outside
+    SpawnEventCake(-441.667205, -252.113220, 507.470703);
+
+    //EMP #10 top floor on the way to the sniper post
+    SpawnEventCake(-440.699340, 141.339019, 416.031250);
+
+    //EMP #11 terciary on the top floor, emp side
+    SpawnEventCake(-1574.572753 ,-611.087585 ,512.031250);
+
+    //EMP #12 a shelf at east entrance to prime
+    SpawnEventCake(1320.524658 ,-835.298217 ,118.966712);
+    SpawnEventCake(1637.244750 ,-143.702117 ,20.257713);
+    SpawnEventCake(1636.787109 ,-147.128753 ,2.628120);
+    SpawnEventCake(1669.804199 ,-143.759002 ,2.628112);
+    SpawnEventCake(1666.993041 ,-138.885467 ,20.127441);
+    SpawnEventCake(1696.145385 ,-150.673889 ,37.874549);
+    SpawnEventCake(1696.863891 ,-151.232757 ,20.461372);
+    SpawnEventCake(1696.078491 ,-146.710952 ,2.628120);
+    SpawnEventCake(1663.740966 ,-145.933532 ,37.746345);
+    SpawnEventCake(1728.253173 ,-143.998382 ,37.693996);
+    SpawnEventCake(1729.364990 ,-145.547286 ,20.307613);
+    SpawnEventCake(1610.163208 ,-138.980957 ,37.558296);
+    SpawnEventCake(1602.192382 ,-153.253158 ,37.944313);
+
+    //EMP #13 yellow car on spawn
+    SpawnEventCake( 1673.768188 ,618.487548 ,75.759582);
+
+    //EMP #14 hydrant on spawn
+    SpawnEventCake(351.673614 ,865.939697 ,75.887496);
+
+    //EMP #15 east entrance to base
+    SpawnEventCake(1439.084228 ,1317.494995 ,0.031250);
+
+
+
+
+
+    //CN #1 top floor above prime behind a pillar
+    SpawnEventCake(496.771118 ,-1209.694335 ,464.031250);
+
+    //CN #2 under stairs towards top terciary
+    SpawnEventCake(-985.069274 ,-1438.556884 ,-45.446830);
+
+    //CN #3 terciary on the top floor
+    SpawnEventCake(-1308.055908 ,-1342.530517 ,531.688598);
+
+    //CT #4 blind cornor-1st set of stairs cons side, 2nd floor
+    SpawnEventCake(-428.951171 ,-2117.738281 ,208.031250);
+
+    //CT #5 behind boxes-left side
+    SpawnEventCake(-1047.528076 ,-3758.356201 ,64.075149);
+
+    //CT #6 handrail on top floor close to terciary
+    SpawnEventCake(-606.185852, -1505.783935, 522.867309);
+
+    //CT #7 dark cave on west
+    SpawnEventCake(-2538.692626 ,-3258.852294 ,-177.231704);
+
+    //CT #8 fire hydrant on spawn
+    SpawnEventCake(-190.385299 ,-3038.924804 ,40.340156);
+
+    //CT #9 humvee on east
+    SpawnEventCake(2124.450439 ,-2114.693847 ,98.043830);
+
+    //CT #10 east exit from prime behind vending machine
+    SpawnEventCake(975.858825, -1252.408081, 0.031250);
+
+    //CT #11 fire hydrant-middle of map behind prime
+    SpawnEventCake(1883.210205 ,-678.728515 ,40.340148);
+
+    //CT #12 trololo cake, east entrance to prime on CT side
+    SpawnEventCake(1497.606567 ,-1042.902709 ,39.642356);
+    SpawnEventCake(1520.313110 ,-1039.735473 ,39.642349);
+
+    //CN #13 on top of van-west side near subway
+    SpawnEventCake(-1389.703857 ,-1620.339721 ,120.952178);
+
+    //CN #14 escalator to subway
+    SpawnEventCake(1493.071777 ,-2387.780029 ,-261.851196);
+
+    //CN #15 corner next to dark undergound
+    SpawnEventCake(-2420.377197, -3009.943603, 13.286746);
+
+    //CN #16 vending machine close to subway
+    SpawnEventCake(366.169097, -2169.141845, 54.642341);
+
+    // in the middle of the subway
+    SpawnEventCake(1382.707153 ,-1086.981933 ,-527.968750);
+
+
+    // CN unreachable - behind baricade in base
+    SpawnEventCake(333.396331, -4074.392822, 10.366767);
+    // CN unreachable - behind baricade east sec
+    SpawnEventCake(2513.984130, -1912.238891, 96.200553);
+
+}
+
+SpawnEventCake(Float:x, Float:y, Float:z, client=0) {
+    new cake = CreateEntityByName("prop_dynamic_override");
+    new Float:pos[3];
+    pos[0] = x;
+    pos[1] = y;
+    pos[2] = z;
+    DispatchKeyValue(cake, "model",  "models/cakehat/cakehat.mdl");
+    DispatchKeyValue(cake, "solid", "6");
+    DispatchSpawn(cake);
+    TeleportEntity(cake, pos, NULL_VECTOR, NULL_VECTOR);
+
+    if (client) {
+        PrintToChat(client, "SpawnEventCake(%f, %f, %f);", pos[0], pos[1], pos[2]);
+    }
+
+    PushArrayCell(CAKES, cake);
+    SDKHook(cake, SDKHook_Touch, EventCakeCollected);
+}
+
+
+public Action:CMD_EventCake(client, args) {
+
+    if (!g_Bools[Enabled]) {
+        return Plugin_Handled;
+    }
+
+    if(!client || !IsPlayerAlive(client))
+    {
+        return Plugin_Handled;
+    }
+
+    decl Float:vOrigin[3], Float:vAngles[3], Float:vBackwards[3], Float:pos[3];
+
+    GetClientEyePosition(client, vOrigin);
+    GetClientEyeAngles(client, vAngles);
+    GetAngleVectors(vAngles, vBackwards, NULL_VECTOR, NULL_VECTOR);
+    NormalizeVector(vBackwards, vBackwards);
+    ScaleVector(vBackwards, 10.0);
+
+    new Handle:trace = TR_TraceRayFilterEx(vOrigin, vAngles, MASK_SHOT, RayType_Infinite, TraceEntityFilterPlayer);
+
+    if (TR_DidHit(trace)) {
+        TR_GetEndPosition(pos, trace);
+        SpawnEventCake(pos[0], pos[1], pos[2], client);
+    }
+
+    return Plugin_Handled;
+}
+
+public OnGameFrame()
+{
+    for (new i=2; i<4; i++) {
+        if (TeamCakes[i] != GetTeamScore(i)) {
+            SetTeamScore(i, TeamCakes[i]);
+        }
+    }
+}
+
+public Action:EventCakeCollected(entity, client) {
+    if (client && client <= MaxClients) {
+        new team = GetClientTeam(client);
+        TriggerVictory(team);
+
+
+        if(IsValidEntity(entity)) {
+            PrintToChatAll("\x04%N found & ate a cake, yummy!", client);
+
+            new Float:pos[3];
+            GetEntPropVector(entity, Prop_Send, "m_vecOrigin", pos);
+
+            new team = GetClientTeam(client);
+            TeamCakes[team]++;
+            SetTeamScore(team, TeamCakes[team]);
+
+            RemoveCake(entity);
+
+            if (TeamCakes[team] >= g_Ints[WinCount]) {
+                TriggerVictory(team);
+            }
+        }
+    }
+
+    return Plugin_Handled;
+}
+
+TriggerVictory(team) {
+	new ent = FindEntityByClassname(-1, "nd_logic_custom"),
+		Handle:event = CreateEvent("round_win");
+
+	if (ent == -1)
+	{
+		ent = CreateEntityByName("nd_logic_custom");
+		DispatchSpawn(ent);
+	}
+
+	SetEventInt(event, "type", 1);
+	SetEventInt(event, "team", team);
+
+	AcceptEntityInput(ent, "EndRoundAuto");
+	FireEvent(event);
+}
+
+
+RemoveCake(entity) {
+    new cake_idx = FindValueInArray(CAKES, entity);
+    RemoveFromArray(CAKES, cake_idx);
+    RemoveEdict(entity);
+}
+
+public bool:TraceEntityFilterPlayer(entity, contentsMask)
+{
+    return entity <= 0 || entity > MaxClients;
+}
+
+public OnCVarChange(Handle:convar_hndl, const String:oldValue[], const String:newValue[])
+{
+	GetCVars();
+}
+
+GetCVars()
+{
+	g_Bools[Enabled] = GetConVarBool(g_Handle[Enabled]);
+	g_Ints[WinCount] = GetConVarInt(g_Handle[WinCount]);
+}

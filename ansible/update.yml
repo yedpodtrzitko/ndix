@@ -1,0 +1,13 @@
+---
+- name: update ND server
+  hosts: nd
+
+  tasks:
+    - name: synchronize plugins
+      synchronize: src=../deploy_server/ dest=/home/steam/nd/nucleardawn/
+      sudo: yes
+      sudo_user: steam
+
+    - name: chown
+      file: path=/home/steam/nd/nucleardawn/ state=directory owner=steam recurse=yes
+      sudo: yes
