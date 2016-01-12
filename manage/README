@@ -1,0 +1,5 @@
+remote console management
+
+- run `install`
+- copy `template` into a new script, and edit server IP inside
+- run `run <server_name>`, where server_name is the name of new script
