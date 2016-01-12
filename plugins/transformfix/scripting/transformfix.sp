@@ -53,7 +53,7 @@ public Plugin:myinfo =
 	author = "yed_",
 	description = "Class Transform Fix",
 	version = PLUGIN_VERSION,
-	url = "http://ndix.vanyli.net"
+    url = "https://github.com/yedpodtrzitko/ndix"
 }
 
 public OnPluginStart()

@@ -17,7 +17,7 @@ public Plugin:myinfo = {
     author = "yed_",
     description = "Prevent server crash by disabling selling the sonic turret",
     version = PLUGIN_VERSION,
-    url = "git@vanyli.net:nd-plugins"
+    url = "https://github.com/yedpodtrzitko/ndix"
 }
 
 public OnPluginStart() {

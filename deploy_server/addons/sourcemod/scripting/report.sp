@@ -30,7 +30,7 @@ public Plugin:myinfo = {
     author = "yed_",
     description = "Enable reporting things to admins",
     version = PLUGIN_VERSION,
-    url = "http://ndix.vanyli.net"
+    url = "https://github.com/yedpodtrzitko/ndix"
 }
 
 public OnPluginStart() {

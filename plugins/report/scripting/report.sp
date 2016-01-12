@@ -30,11 +30,11 @@ public Plugin:myinfo = {
     author = "yed_",
     description = "Enable reporting things to admins",
     version = PLUGIN_VERSION,
-    url = "http://ndix.vanyli.net"
+    url = "https://github.com/yedpodtrzitko/ndix"
 }
 
 public OnPluginStart() {
-    CreateConVar("sm_report_version", PLUGIN_VERSION, "ND Offmap Version", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_NOTIFY|FCVAR_DONTRECORD);
+    CreateConVar("sm_report_version", PLUGIN_VERSION, "ND Report Version", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_NOTIFY|FCVAR_DONTRECORD);
 
     g_Handle[Enabled] = CreateConVar("sm_report_enabled", "1", "Flag to (de)activate the plugin");
     g_Bools[Enabled] = GetConVarBool(g_Handle[Enabled]);

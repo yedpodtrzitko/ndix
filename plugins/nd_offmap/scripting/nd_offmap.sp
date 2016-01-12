@@ -28,7 +28,7 @@ public Plugin:myinfo = {
     author = "yed_",
     description = "Prevents exploting the invalid map borders",
     version = PLUGIN_VERSION,
-    url = "git@vanyli.net:nd-plugins"
+    url = "https://github.com/yedpodtrzitko/ndix"
 }
 
 public OnPluginStart() {
@@ -272,8 +272,7 @@ public Action:CheckBorders(Handle timer, any entity) {
         }
 
         if (tmpAxisViolated && (tmpAxisCount == tmpAxisViolated)) {
-            SetEntProp(entity, Prop_Send, "m_iMaxHealth", 1.0);
-            SDKHooks_TakeDamage(entity, entity, entity, 5001.0, DMG_SLASH, -1, position, position);
+            AcceptEntityInput(entity, "Kill");
         }
     }
 }

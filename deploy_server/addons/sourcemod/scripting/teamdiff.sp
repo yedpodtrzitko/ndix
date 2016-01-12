@@ -19,7 +19,7 @@ public Plugin:myinfo =
 	author = "yed_",
 	description = "Shows teamdiff value.",
 	version = PLUGIN_VERSION,
-	url = "http://ndix.vanyli.net"
+    url = "https://github.com/yedpodtrzitko/ndix"
 }
 
 

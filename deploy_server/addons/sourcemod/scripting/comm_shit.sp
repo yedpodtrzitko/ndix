@@ -24,7 +24,7 @@ public Plugin:myinfo =
 	author = "yed_",
 	description = "Commander-related functionality (mutiny, restrictions, info)",
 	version = VERSION,
-	url = "http://ndix.vanyli.net"
+    url = "https://github.com/yedpodtrzitko/ndix"
 }
 
 enum Handles

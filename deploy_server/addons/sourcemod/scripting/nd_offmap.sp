@@ -28,7 +28,7 @@ public Plugin:myinfo = {
     author = "yed_",
     description = "Prevents exploting the invalid map borders",
     version = PLUGIN_VERSION,
-    url = "git@vanyli.net:nd-plugins"
+    url = "https://github.com/yedpodtrzitko/ndix"
 }
 
 public OnPluginStart() {

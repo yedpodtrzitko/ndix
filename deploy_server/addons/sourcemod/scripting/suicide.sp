@@ -7,7 +7,7 @@ public Plugin:myinfo =
     author = "yed_",
     description = "suicide plugin",
     version = "0.1",
-    url = "http://ndix.vanyli.net"
+    url = "https://github.com/yedpodtrzitko/ndix"
 };
  
 public OnPluginStart()

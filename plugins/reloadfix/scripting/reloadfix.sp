@@ -15,7 +15,7 @@ public Plugin:myinfo = {
 	author = "yed_",
 	description = "Fix the problem with double-reloading of weapon",
 	version = PLUGIN_VERSION,
-	url = "http://ndix.vanyli.net"
+    url = "https://github.com/yedpodtrzitko/ndix"
 }
 
 

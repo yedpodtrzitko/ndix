@@ -37,7 +37,7 @@ public Plugin:myinfo = {
     author = "yed_",
     description = "The cake is NOT a lie",
     version = PLUGIN_VERSION,
-    url = "http://ndix.vanyli.net"
+    url = "https://github.com/yedpodtrzitko/ndix"
 }
 
 public OnPluginStart() {

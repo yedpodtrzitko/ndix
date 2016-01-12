@@ -30,7 +30,7 @@ public Plugin:myinfo =
 	author = "jddunlap",
 	description = "Shows a commander checklist for new commanders",
 	version = COMM_CHECKLIST_VERSION,
-	url = "http://ndix.vanyli.net"
+    url = "https://github.com/yedpodtrzitko/ndix"
 };
 
 

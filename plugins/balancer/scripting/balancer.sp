@@ -17,7 +17,7 @@ public Plugin:myinfo =
 	author = "yed_",
 	description = "Team balancer",
 	version = PLUGIN_VERSION,
-	url = "http://ndix.vanyli.net"
+    url = "https://github.com/yedpodtrzitko/ndix"
 }
 
 

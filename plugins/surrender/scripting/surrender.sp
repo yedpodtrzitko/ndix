@@ -11,7 +11,7 @@ public Plugin:myinfo =
 	author = "yed_",
 	description = "Another way how to surrender",
 	version = PLUGIN_VERSION,
-	url = "git@vanyli.net:nd-plugins"
+    url = "https://github.com/yedpodtrzitko/ndix"
 };
 
 new Handle:g_Cvar_Needed = INVALID_HANDLE;
