@@ -38,7 +38,8 @@ public Event_WeaponReload(Handle:event, const String:name[], bool:broadcast) {
 	new client = GetClientOfUserId(GetEventInt(event, "userid"));
 	SetEntProp(client, Prop_Data, "m_afButtonDisabled", IN_ATTACK2);
 	if (IsClientInGame(client) && !IsFakeClient(client)) {
-		CreateTimer(0.2, Timer_EnableAttack2, client, TIMER_REPEAT);
+		CreateTimer(0.3, Timer_EnableAttack2, client, TIMER_REPEAT);
+
 	}
 }
 
@@ -66,3 +67,17 @@ public Action:Timer_EnableAttack2(Handle:timer, any:client) {
 	SetEntProp(client, Prop_Data, "m_afButtonDisabled", 0);
 	return Plugin_Stop;
 }
+
+/*
+public Action:OnPlayerRunCmd(client, &buttons, &impulse, float vel[3], float angles[3], &weapon)
+{
+
+	if (GetEntProp(i_Weapon, Prop_Data, "m_bInReload")) {
+		Client_RemoveButtons(client, IN_ATTACK2);
+
+		return Plugin_Changed;
+	}
+
+	return Plugin_Continue;
+}
+*/
