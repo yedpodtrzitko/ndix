@@ -18,7 +18,7 @@ public Plugin:myinfo = {
     url = "https://github.com/yedpodtrzitko/ndix"
 }
 
-
+/*
 public OnPluginStart() {
 	//g_ActiveWeaponOffset = FindSendPropInfo("CBasePlayer", "m_hActiveWeapon");
 	HookEvent("weapon_reload", Event_WeaponReload, EventHookMode_Pre);
@@ -27,6 +27,7 @@ public OnPluginStart() {
 		SetEntProp(client, Prop_Data, "m_afButtonDisabled", 0);
 	}
 }
+*/
 
 public OnPluginEnd() {
 	LOOP_CLIENTS(client, CLIENTFILTER_INGAME) {
