@@ -14,7 +14,7 @@
 public Plugin:myinfo =
 {
 	name = NAME,
-	author = "Xander, modified by yed_",
+	author = "Xander, yed_",
 	description = "Warmup Round for ND",
 	version = PLUGIN_VERSION,
 	url = "https://forums.alliedmods.net/showthread.php?t=186001"
@@ -70,7 +70,7 @@ char PriorityPlayers[][] = {
     "STEAM_1:0:29258395",      //12 djfish
 };
 
-bool lowRestricted = true;
+bool lowRestricted = false;
 int g_iPlayerManager;
 /*
 new String:TaintedPlayers[1][32] = {
@@ -139,7 +139,7 @@ public OnMapStart()
 		SetConVarInt(g_Handle[Gravity], g_Integer[ModGravity]);
 	}
 
-	lowRestricted = true;
+	lowRestricted = false;
 	CreateTimer(140.0, RestrictLow, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE);
 }
 
@@ -392,10 +392,11 @@ public Action:Command_Apply(int client, const char[] command, args)
 {
 	int g_iRankOffset = FindSendPropInfo("CNDPlayerResource", "m_iPlayerRank");
 	int rank = GetEntData(g_iPlayerManager, g_iRankOffset + 4*client);
+	/*
 	if (rank < 15 && lowRestricted) {
 		PrintToChat(client, "\x04Players with level < 15 cant apply for commander yet, try it in a minute again");
 		return Plugin_Handled;
-	}
+	}*/
 
 	if(!IsClientInGame(client) || IsFakeClient(client))
 	{
