@@ -39,7 +39,8 @@
 			in RoundMsg
 			in Chat Commands
   2.5   Fixed this error: "Can't create physics object for model/parachute/parachute_carbon.mdl".
-   
+  2.6   Don't use OnGameFrame
+        Fix Nuclear Dawn Support
   Description:
   
 	If cost = 0 then Everybody have a parachute.
@@ -120,7 +121,7 @@
 #include <sourcemod>
 #include <sdktools>
 
-#define PARACHUTE_VERSION 	"2.5"
+#define PARACHUTE_VERSION 	"2.6"
 
 //Parachute Model
 #define PARACHUTE_MODEL		"parachute_carbon"
@@ -151,11 +152,9 @@ new Handle:g_model = INVALID_HANDLE;
 new Handle:g_decrease = INVALID_HANDLE;
 new Handle:g_button = INVALID_HANDLE;
 
-new x;
 new cl_flags;
-new cl_buttons;
-new Float:speed[3];
-new bool:isfallspeed;
+float speed[3];
+bool isfallspeed;
 
 new USE_BUTTON;
 new String:ButtonText[265];
@@ -331,12 +330,13 @@ public Action:RoundMsg(Handle:timer, any:client){
 	return Plugin_Continue;
 }
 
-public StartPara(client,bool:open)
+public StartPara(client, bool open)
 {
-	decl Float:velocity[3];
-	decl Float:fallspeed;
 	if (g_iVelocity == -1) return;
 	if (GetConVarInt(g_enabled) != 1) return;
+
+	decl Float:velocity[3];
+	decl Float:fallspeed;
 	if(hasPara[client] || GetConVarInt(g_cost) == 0){
 		fallspeed = GetConVarFloat(g_fallspeed)*(-1.0);
 		GetEntDataVector(client, g_iVelocity, velocity);
@@ -370,7 +370,7 @@ public EndPara(client)
 }
 
 public OpenParachute(client){
-	if (strcmp(g_game,"nucleardawn",false) == 0 && GetEntProp(client, Prop_Send, "m_iPlayerClass") == 2) {
+	if (strcmp(g_game, "nucleardawn",false) == 0 && GetEntProp(client, Prop_Send, "m_iPlayerClass") == 2) {
 		// is player invisible?
 		if ((GetEntProp(client, Prop_Send, "m_nPlayerCond") & 2) == 2) {
 			return;
@@ -382,73 +382,58 @@ public OpenParachute(client){
 	StrCat(path,255,".mdl")
 	
 	if(GetConVarInt(g_model) == 1){
+		char[] clientParachuteID = new char[32];
+		Format(clientParachuteID, 32, "para_%d", GetClientUserId(client));
+		DispatchKeyValue(client, "targetname", clientParachuteID);
 		Parachute_Ent[client] = CreateEntityByName("prop_dynamic_override");
-		DispatchKeyValue(Parachute_Ent[client],"model",path);
+		DispatchKeyValue(Parachute_Ent[client], "parentname", clientParachuteID);
+		DispatchKeyValue(Parachute_Ent[client], "model", path);
 		SetEntityMoveType(Parachute_Ent[client], MOVETYPE_NOCLIP);
 		DispatchSpawn(Parachute_Ent[client]);
-		
-		hasModel[client]=true;
-		TeleportParachute(client);
-	}
-}
-
-public TeleportParachute(client){
-	if(hasModel[client] && IsValidEntity(Parachute_Ent[client])){
-		decl Float:Client_Origin[3];
-		decl Float:Client_Angles[3];
-		decl Float:Parachute_Angles[3] = {0.0, 0.0, 0.0};
-		GetClientAbsOrigin(client,Client_Origin);
-		GetClientAbsAngles(client,Client_Angles);
+		hasModel[client] = true;
+		float Client_Origin[3];
+		float Client_Angles[3];
+		float Parachute_Angles[3] = {0.0, 0.0, 0.0};
+		GetClientAbsOrigin(client, Client_Origin);
+		GetClientAbsAngles(client, Client_Angles);
 		Parachute_Angles[1] = Client_Angles[1];
+        Client_Origin[2] += 20.0;
 		TeleportEntity(Parachute_Ent[client], Client_Origin, Parachute_Angles, NULL_VECTOR);
+		SetVariantString(clientParachuteID);
+		AcceptEntityInput(Parachute_Ent[client], "SetParent", Parachute_Ent[client], Parachute_Ent[client], 0);
 	}
 }
 
 public CloseParachute(client){
 	if(hasModel[client] && IsValidEntity(Parachute_Ent[client])){
-		RemoveEdict(Parachute_Ent[client]);
-		hasModel[client]=false;
+		AcceptEntityInput(Parachute_Ent[client], "Kill", -1, -1, 0);
+		hasModel[client] = false;
 	}
 }
 
 public Check(client){
-	if(GetConVarInt(g_enabled)== 1 ){
-		GetEntDataVector(client,g_iVelocity,speed);
-		cl_flags = GetEntityFlags(client);
-		if(speed[2] >= 0 || (cl_flags & FL_ONGROUND)) EndPara(client);
-	}
+    GetEntDataVector(client,g_iVelocity,speed);
+    cl_flags = GetEntityFlags(client);
+    if(speed[2] >= 0 || (cl_flags & FL_ONGROUND)) EndPara(client);
 }
 
-public OnGameFrame()
-{
-	if(GetConVarInt(g_enabled) == 0) return;
-	for (x = 1; x <= g_maxplayers; x++)
-	{
-		if (IsClientInGame(x) && IsPlayerAlive(x))
-		{
-			cl_buttons = GetClientButtons(x);
-			if (cl_buttons & USE_BUTTON)
-			{
-				if (!inUse[x])
-				{
-					inUse[x] = true;
-					isfallspeed = false;
-					StartPara(x,true);
-				}
-				StartPara(x,false);
-				TeleportParachute(x);
+public Action OnPlayerRunCmd(client, &buttons, &impulse, float vel[3], float angles[3], &weapon) {
+	if (IsClientInGame(client) && !IsFakeClient(client)) {
+		if (IsPlayerAlive(client) && (buttons & IN_JUMP || buttons & IN_USE)) {
+			if (!inUse[client]) {
+				inUse[client] = true;
+				isfallspeed = false;
+				StartPara(client, true);
 			}
-			else
-			{
-				if (inUse[x])
-				{
-					inUse[x] = false;
-					EndPara(x);
-				}
+			StartPara(client, false);
+		} else {
+			if (inUse[client]) {
+				inUse[client] = false;
+				EndPara(client);
 			}
-			Check(x);
 		}
-	}
+		Check(client);
+    }
 }
 
 stock GetNextSpaceCount(String:text[],CurIndex){
