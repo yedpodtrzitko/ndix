@@ -13,12 +13,12 @@
 #include <sourcemod>
 #include <sdkhooks>
 
-#define PLUGIN_VERSION "0.2.0"
+#define PLUGIN_VERSION "0.2.1"
 #define DEBUG 0
 
-new bool:validMap = false;
+bool validMap = false;
 
-new Handle:HAX = INVALID_HANDLE;
+Handle HAX = INVALID_HANDLE;
 
 new tmpAxisCount;
 new tmpAxisViolated;
@@ -39,11 +39,10 @@ public OnPluginStart() {
 }
 
 public OnMapStart() {
-    decl String:map[64];
+    char map[32];
     GetCurrentMap(map, sizeof(map));
 
     ClearArray(HAX);
-
     if (StrEqual(map, "hydro")) {
         HandleHydro();
     } else if (StrEqual(map, "coast")) {
@@ -81,7 +80,7 @@ HandleMetro() {
     x 2420+
     y 680+
     */
-    new Float:hax[4] = {0.0, ...};
+    float hax[4] = {0.0, ...};
     hax[0] = 2420.0; //minX
     hax[2] = 680.0; //minY
     PushArrayArray(HAX, hax);
@@ -107,7 +106,7 @@ HandleGate() {
        |
        |
     */
-    new Float:hax[4] = {0.0, ...};
+    float hax[4] = {0.0, ...};
     hax[0] = 4000.0; //minX
     PushArrayArray(HAX, hax);
 }
@@ -141,13 +140,13 @@ HandleCoast() {
     x - 5246.656250 52.499198 1615.631225
     w - 5247.633300 -726.002502 1615.631225
     v - 4465.646484 49.810642 1615.631225
-    
+
     -----v
          |
     w----x
     */
 
-    new Float:hax[4] = {0.0, ...};
+    float hax[4] = {0.0, ...};
     hax[0] = 4466.0;    // minX
     hax[1] = 5246.0;    // maxX
     hax[2] = 0.0;       // minY
@@ -160,7 +159,7 @@ HandleCoast() {
     c - 3518.860351 6597.848144 49.899757
 
      c ------
-     |    
+     |
      |
      b ------
 
@@ -227,11 +226,11 @@ public OnEntityCreated(entity, const String:classname[]){
     }
 }
 
-public Action:CheckBorders(Handle timer, any entity) {
+public Action CheckBorders(Handle timer, any entity) {
     float position[3];
     GetEntPropVector(entity, Prop_Data, "m_vecOrigin", position);
     //PrintToChatAll("placed location %f - %f - %f", position[0], position[1], position[2]);
-    new Float:hax[4];
+    float hax[4];
     for (new i=0; i<GetArraySize(HAX); i++) {
         tmpAxisCount = 0;
         tmpAxisViolated = 0;
@@ -272,7 +271,7 @@ public Action:CheckBorders(Handle timer, any entity) {
         }
 
         if (tmpAxisViolated && (tmpAxisCount == tmpAxisViolated)) {
-            AcceptEntityInput(entity, "Kill");
+            SDKHooks_TakeDamage(entity, entity, entity, 5001.0, DMG_SLASH, -1, position, position);
         }
     }
 }

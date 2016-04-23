@@ -1,7 +1,7 @@
 /*
-    A rough fix for building outside of the map (Hydro, Gate, Coast)
+    A rough fix for building outside of the map (Hydro, Gate, Coast...)
 
-    0.2     more glitches fix
+    0.2     more glitches fix (thx Phi)
             using dynamic array
             reversed coordinates
 
@@ -13,12 +13,12 @@
 #include <sourcemod>
 #include <sdkhooks>
 
-#define PLUGIN_VERSION "0.2.0"
+#define PLUGIN_VERSION "0.2.1"
 #define DEBUG 0
 
-new bool:validMap = false;
+bool validMap = false;
 
-new Handle:HAX = INVALID_HANDLE;
+Handle HAX = INVALID_HANDLE;
 
 new tmpAxisCount;
 new tmpAxisViolated;
@@ -39,11 +39,10 @@ public OnPluginStart() {
 }
 
 public OnMapStart() {
-    decl String:map[64];
+    char map[32];
     GetCurrentMap(map, sizeof(map));
 
     ClearArray(HAX);
-
     if (StrEqual(map, "hydro")) {
         HandleHydro();
     } else if (StrEqual(map, "coast")) {
@@ -68,6 +67,7 @@ public OnMapEnd() {
 
 HandleMetro() {
     /*
+    this one disable structures inside the buildings clos to Emp base
 
     1. 2539.226562 679.451477
     2. 2424.608154 685.783752
@@ -80,7 +80,7 @@ HandleMetro() {
     x 2420+
     y 680+
     */
-    new Float:hax[4] = {0.0, ...};
+    float hax[4] = {0.0, ...};
     hax[0] = 2420.0; //minX
     hax[2] = 680.0; //minY
     PushArrayArray(HAX, hax);
@@ -93,6 +93,8 @@ HandleGate() {
     y
     - x +
 
+    this one handles the spot close to prime
+
     a - 3668.344726 1132.599365 0.000000
     b - 4004.024658 1103.116699 154.177978
     c - 4627.127929 1161.775512 -63.968750
@@ -104,7 +106,7 @@ HandleGate() {
        |
        |
     */
-    new Float:hax[4] = {0.0, ...};
+    float hax[4] = {0.0, ...};
     hax[0] = 4000.0; //minX
     PushArrayArray(HAX, hax);
 }
@@ -115,15 +117,16 @@ HandleHydro() {
     y
     + x -
 
-    -7063.121093 -128.614593 144.000061
-    -7079.794433 -422.089843 144.000000
-    -7095.130371 -962.712158 144.000244
-    -7135.658691 -1837.050537 116.031250
+    this one disable building from east secondary to Cons base
+
     */
 
-    new Float:hax[4] = {0.0, ...};
-    hax[1] = -7000.0; //maxX
-    hax[3] = -1000.0; //maxY
+    float hax[4] = {
+        0.0,
+        -7000.0,    //maxX
+        0.0,
+        -1000.0     //maxY
+    };
     PushArrayArray(HAX, hax);
 }
 
@@ -137,13 +140,13 @@ HandleCoast() {
     x - 5246.656250 52.499198 1615.631225
     w - 5247.633300 -726.002502 1615.631225
     v - 4465.646484 49.810642 1615.631225
-    
+
     -----v
          |
     w----x
     */
 
-    new Float:hax[4] = {0.0, ...};
+    float hax[4] = {0.0, ...};
     hax[0] = 4466.0;    // minX
     hax[1] = 5246.0;    // maxX
     hax[2] = 0.0;       // minY
@@ -156,7 +159,7 @@ HandleCoast() {
     c - 3518.860351 6597.848144 49.899757
 
      c ------
-     |    
+     |
      |
      b ------
 
@@ -223,11 +226,11 @@ public OnEntityCreated(entity, const String:classname[]){
     }
 }
 
-public Action:CheckBorders(Handle:timer, any:entity) {
-    new Float:position[3];
+public Action CheckBorders(Handle timer, any entity) {
+    float position[3];
     GetEntPropVector(entity, Prop_Data, "m_vecOrigin", position);
     //PrintToChatAll("placed location %f - %f - %f", position[0], position[1], position[2]);
-    new Float:hax[4];
+    float hax[4];
     for (new i=0; i<GetArraySize(HAX); i++) {
         tmpAxisCount = 0;
         tmpAxisViolated = 0;
@@ -268,7 +271,6 @@ public Action:CheckBorders(Handle:timer, any:entity) {
         }
 
         if (tmpAxisViolated && (tmpAxisCount == tmpAxisViolated)) {
-            SetEntProp(entity, Prop_Send, "m_iMaxHealth", 1.0);
             SDKHooks_TakeDamage(entity, entity, entity, 5001.0, DMG_SLASH, -1, position, position);
         }
     }
