@@ -3,10 +3,12 @@
 
     Author: yed_
 
-    0.8     something, idk
+    0.9     syntax bump
 
-    0.7     whitelist of good snipers (and me :p)
-            fixed the loophole for Armoury
+    0.8     migrating to SM 1.7
+            add whitelisting
+
+    0.7     fixed the loophole for Armoury
 
     0.6     cleaned some shit
 
@@ -54,10 +56,10 @@
 
 int CurrentCount[4] = {0,0,0,0};
 int LimitValue[4] = {0,0,0,0};
-Handle h_Enabled;
-Handle h_Limit;
+ConVar c_Enabled;
+ConVar c_Limit;
 
-char AllowedPlayers[][] = {
+new const String:AllowedPlayers[][] = {
     "STEAM_1:1:53763028",    //Wrecked Em
     "STEAM_1:1:32804464",    //Digger404
     "STEAM_1:0:35010700",    //FirstBlood
@@ -73,7 +75,7 @@ char AllowedPlayers[][] = {
     "STEAM_1:0:33657626",    //12 yed_
 };
 
-public Plugin:myinfo = {
+public Plugin myinfo = {
     name = "Sniper Limiter",
     author = "yed_",
     description = "Limit the number of snipers in the team",
@@ -82,8 +84,8 @@ public Plugin:myinfo = {
 }
 
 public OnPluginStart() {
-    h_Enabled =CreateConVar("sm_maxsnipers_enabled", "1", "Flag to (de)activate the plugin");
-    h_Limit = CreateConVar("sm_maxsnipers_limit", "2", "Limit the number of snipers in a team (Default 2)");
+    c_Enabled =CreateConVar("sm_maxsnipers_enabled", "1", "Flag to (de)activate the plugin");
+    c_Limit = CreateConVar("sm_maxsnipers_limit", "2", "Limit the number of snipers in a team (Default 2)");
     CreateConVar("sm_maxsnipers_version", PLUGIN_VERSION, "ND Maxsnipers Version", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_NOTIFY|FCVAR_DONTRECORD);
 
     RegAdminCmd("sm_maxsnipers_admin", CMD_ChangeSnipersLimit, ADMFLAG_GENERIC, "!maxsnipers_admin <team> <amount>");
@@ -96,6 +98,10 @@ public OnPluginStart() {
 }
 
 public OnMapStart() {
+    if (!c_Enabled.BoolValue) {
+        return;
+    }
+
     ResetLimits();
 }
 
@@ -118,13 +124,17 @@ RecountClasses(client) {
     }
 
     #if DEBUG == 1
-        PrintToChat(client, "recalced %i - %i ", client_team, recalced);
+        PrintToChat(client, "recalced %i - %i ", (client_team), recalced);
     #endif
 
     CurrentCount[client_team] = recalced;
 }
 
-public Action:Event_ChangeClass(Handle:event, const String:name[], bool:dontBroadcast) {
+public Action Event_ChangeClass(Handle event, char[] name, bool dontBroadcast) {
+    if (!c_Enabled.BoolValue) {
+        return Plugin_Continue;
+    }
+
     int client = GetClientOfUserId(GetEventInt(event, "userid"));
     int cls = GetEventInt(event, "class");
     int subcls = GetEventInt(event, "subclass");
@@ -152,14 +162,14 @@ public Action:Event_ChangeClass(Handle:event, const String:name[], bool:dontBroa
     return Plugin_Continue;
 }
 
-IsAllowedPlayer(client) {
+bool IsAllowedPlayer(client) {
     char playerId[32];
     GetClientAuthId(client, AuthId_Steam2, playerId, sizeof(playerId));
     return Array_FindString(AllowedPlayers, sizeof(AllowedPlayers), playerId) != -1;
 }
 
-public Action:Event_PlayerDied(Handle:event, const String:name[], bool:dontBroadcast) {
-    if (GetConVarInt(h_Enabled) != 1 ) {
+public Action Event_PlayerDied(Handle event, char[] name, bool dontBroadcast) {
+    if (!c_Enabled.BoolValue) {
         return Plugin_Continue;
     }
 
@@ -189,8 +199,8 @@ public Action:Event_PlayerDied(Handle:event, const String:name[], bool:dontBroad
 
 
 // CHANGE LIMIT
-public Action:CMD_ChangeSnipersLimit(client, args) {
-    if (GetConVarInt(h_Enabled) != 1 ) {
+public Action CMD_ChangeSnipersLimit(client, args) {
+    if (c_Enabled.BoolValue) {
         return Plugin_Continue;
     }
 
@@ -203,11 +213,11 @@ public Action:CMD_ChangeSnipersLimit(client, args) {
         return Plugin_Handled;
     }
 
-    decl String:strteam[32];
+    char strteam[32];
     GetCmdArg(1, strteam, sizeof(strteam));
     int team = StringToInt(strteam);
 
-    decl String:strvalue[32];
+    char strvalue[32];
     GetCmdArg(2, strvalue, sizeof(strvalue));
     int value = StringToInt(strvalue);
 
@@ -215,8 +225,8 @@ public Action:CMD_ChangeSnipersLimit(client, args) {
     return Plugin_Handled;
 }
 
-public Action:CMD_ChangeTeamSnipersLimit(client, args) {
-    if (GetConVarInt(h_Enabled) != 1 ) {
+public Action CMD_ChangeTeamSnipersLimit(client, args) {
+    if (!c_Enabled.BoolValue) {
         return Plugin_Continue;
     }
 
@@ -244,7 +254,7 @@ public Action:CMD_ChangeTeamSnipersLimit(client, args) {
         return Plugin_Handled;
     }
 
-    decl String:strvalue[32];
+    char strvalue[32];
     GetCmdArg(1, strvalue, sizeof(strvalue));
     int value = StringToInt(strvalue);
 
@@ -257,10 +267,8 @@ public Action:CMD_ChangeTeamSnipersLimit(client, args) {
 }
 
 
-
-
 // HELPER FUNCTIONS
-IsTooMuchSnipers(client) {
+bool IsTooMuchSnipers(client) {
     int client_team = GetClientTeam(client);
 
     #if DEBUG == 1
@@ -270,11 +278,11 @@ IsTooMuchSnipers(client) {
     return CurrentCount[client_team] > LimitValue[client_team];
 }
 
-IsSniperClass(class, subclass) {
+bool IsSniperClass(class, subclass) {
     return (class == ASSAULT_CLASS && subclass == ASSAULT_MARKSMAN) || (class == SNIPER_CLASS && subclass == SNIPER_SNIPER)
 }
 
-ResetClass(client) {
+void ResetClass(client) {
     SetEntProp(client, Prop_Send, "m_iPlayerClass", ASSAULT_CLASS);
     SetEntProp(client, Prop_Send, "m_iPlayerSubclass", ASSAULT_INFANTRY);
     SetEntProp(client, Prop_Send, "m_iDesiredPlayerClass", ASSAULT_CLASS);
@@ -284,20 +292,19 @@ ResetClass(client) {
     PrintToChat(client, "[NDix] Snipers limit reached, resetting to Assault");
 }
 
-ResetLimits() {
-    LimitValue[TEAM_EMP] = GetConVarInt(h_Limit);
-    LimitValue[TEAM_CON] = GetConVarInt(h_Limit);
+void ResetLimits() {
+    LimitValue[TEAM_CON] = LimitValue[TEAM_EMP] = c_Limit.IntValue;
 }
 
-stock bool:IsValidClient(client, bool:nobots = true)
+bool IsValidClient(client, bool nobots = true)
 {
-    if (client < 1 || client > MaxClients || !IsClientConnected(client) || (nobots && IsFakeClient(client)))
+    if (client <= 0 || client > MaxClients || !IsClientConnected(client) || (nobots && IsFakeClient(client)))
         return false;
 
     return IsClientInGame(client);
 }
 
-ChangeSnipersLimit(client, team, value)
+void ChangeSnipersLimit(client, team, value)
 {
 	if (team != 2 && team != 3)
 	{

@@ -4,7 +4,7 @@
 
 #define PLUGIN_VERSION "1.0.8"
 
-public Plugin:myinfo =
+public Plugin myinfo =
 {
 	name = "Show Damage",
 	author = "exvel",
@@ -13,7 +13,6 @@ public Plugin:myinfo =
 	url = "www.sourcemod.net"
 }
 
-new player_old_health[MAXPLAYERS + 1];
 new player_damage[MAXPLAYERS + 1];
 bool block_timer[MAXPLAYERS + 1] = {false,...};
 char DamageEventName[16];
@@ -22,20 +21,14 @@ bool option_show_damage[MAXPLAYERS + 1] = {true,...};
 Handle cookie_show_damage = INVALID_HANDLE;
 bool ignoredPlayers[MAXPLAYERS + 1] = {false,};
 
-//CVars' handles
-Handle cvar_show_damage = INVALID_HANDLE;
-Handle cvar_show_damage_ff = INVALID_HANDLE;
-Handle cvar_show_damage_own_dmg = INVALID_HANDLE;
-Handle cvar_show_damage_text_area = INVALID_HANDLE;
-
-//CVars' varibles
-bool show_damage = true;
-bool show_damage_ff = false;
-bool show_damage_own_dmg = false;
-show_damage_text_area = 1;
+//CVars
+ConVar cvar_show_damage;
+ConVar cvar_show_damage_ff;
+ConVar cvar_show_damage_own_dmg;
+ConVar cvar_show_damage_text_area ;
 
 
-public OnPluginStart()
+public void OnPluginStart()
 {
 	char gameName[80];
 	GetGameFolderName(gameName, 80);
@@ -67,35 +60,30 @@ public OnPluginStart()
 	HookEvent("player_entered_commander_mode", Event_CommandingStart, EventHookMode_Post);
 	HookEvent("player_left_commander_mode", Event_CommandingStop, EventHookMode_Post);
 
-	HookConVarChange(cvar_show_damage, OnCVarChange);
-	HookConVarChange(cvar_show_damage_ff, OnCVarChange);
-	HookConVarChange(cvar_show_damage_own_dmg, OnCVarChange);
-	HookConVarChange(cvar_show_damage_text_area, OnCVarChange);
-
 	AutoExecConfig(true, "plugin.showdamage");
 	LoadTranslations("common.phrases");
 	LoadTranslations("showdamage.phrases");
 
 	cookie_show_damage = RegClientCookie("Show Damage On/Off", "", CookieAccess_Private);
 	new info;
-	SetCookieMenuItem(CookieMenuHandler_ShowDamage, any:info, "Show Damage");
+	SetCookieMenuItem(CookieMenuHandler_ShowDamage, info, "Show Damage");
 }
 
-public Action Event_CommandingStart(Handle event, const String:name[], bool dontBroadcast)
+public Action Event_CommandingStart(Handle event, char[] name, bool dontBroadcast)
 {
 	int client = GetClientOfUserId(GetEventInt(event, "userid"));
 	ignoredPlayers[client] = true;
 	return Plugin_Continue;
 }
 
-public Action Event_CommandingStop(Handle event, const String:name[], bool dontBroadcast)
+public Action Event_CommandingStop(Handle event, char[] name, bool dontBroadcast)
 {
 	int client = GetClientOfUserId(GetEventInt(event, "userid"));
 	ignoredPlayers[client] = false;
 	return Plugin_Continue;
 }
 
-public CookieMenuHandler_ShowDamage(client, CookieMenuAction action, any info, char[] buffer, maxlen)
+public void CookieMenuHandler_ShowDamage(client, CookieMenuAction action, any info, char[] buffer, maxlen)
 {
 	if (action == CookieMenuAction_DisplayOption)
 	{
@@ -129,7 +117,7 @@ public CookieMenuHandler_ShowDamage(client, CookieMenuAction action, any info, c
 	}
 }
 
-public OnClientCookiesCached(client)
+public void OnClientCookiesCached(client)
 {
 	option_show_damage[client] = GetCookieShowDamage(client);
 }
@@ -142,12 +130,7 @@ bool GetCookieShowDamage(client)
 	return !StrEqual(buffer, "Off");
 }
 
-public OnConfigsExecuted()
-{
-	GetCVars();
-}
-
-public Action Event_PlayerSpawn(Handle event, const String:name[], bool dontBroadcast)
+public Action Event_PlayerSpawn(Handle event, char[] name, bool dontBroadcast)
 {
 	new client = GetClientOfUserId(GetEventInt(event, "userid"));
 	block_timer[client] = false;
@@ -169,7 +152,7 @@ public Action ShowDamage(Handle timer, any client)
 		return;
 	}
 
-	switch (show_damage_text_area)
+	switch (cvar_show_damage_text_area.IntValue)
 	{
 		case 1:
 		{
@@ -190,18 +173,7 @@ public Action ShowDamage(Handle timer, any client)
 	player_damage[client] = 0;
 }
 
-public Action Event_PlayerHurt_FrameMod(Handle event, const String:name[], bool dontBroadcast)
-{
-	new client = GetClientOfUserId(GetEventInt(event, "userid"));
-	new client_attacker = GetClientOfUserId(GetEventInt(event, "attacker"));
-	int damage = player_old_health[client] - GetClientHealth(client);
-
-	CalcDamage(client, client_attacker, damage);
-
-	return Plugin_Continue;
-}
-
-public Action Event_PlayerHurt(Handle event, const String:name[], bool dontBroadcast)
+public Action Event_PlayerHurt(Handle event, char[] name, bool dontBroadcast)
 {
 	new client_attacker = GetClientOfUserId(GetEventInt(event, "attacker"));
 	new client = GetClientOfUserId(GetEventInt(event, "userid"));
@@ -216,7 +188,7 @@ public Action Event_PlayerHurt(Handle event, const String:name[], bool dontBroad
 	return Plugin_Continue;
 }
 
-public Action Event_InfectedHurt(Handle event, const String:name[], bool dontBroadcast)
+public Action Event_InfectedHurt(Handle event, char[] name, bool dontBroadcast)
 {
 	new client_attacker = GetClientOfUserId(GetEventInt(event, "attacker"));
 	int damage = GetEventInt(event, "amount");
@@ -228,9 +200,9 @@ public Action Event_InfectedHurt(Handle event, const String:name[], bool dontBro
 
 
 
-CalcDamage(client, client_attacker, damage)
+void CalcDamage(client, client_attacker, damage)
 {
-	if (!show_damage || !option_show_damage[client_attacker])
+	if (!cvar_show_damage.BoolValue || !option_show_damage[client_attacker])
 	{
 		return;
 	}
@@ -250,14 +222,14 @@ CalcDamage(client, client_attacker, damage)
 	{
 		if (client == client_attacker)
 		{
-			if (!show_damage_own_dmg)
+			if (!cvar_show_damage_own_dmg.BoolValue)
 			{
 				return;
 			}
 		}
 		else if (GetClientTeam(client) == GetClientTeam(client_attacker))
 		{
-			if (!show_damage_ff)
+			if (!cvar_show_damage_ff.BoolValue)
 			{
 				return;
 			}
@@ -279,17 +251,4 @@ CalcDamage(client, client_attacker, damage)
 
 	CreateTimer(0.01, ShowDamage, client_attacker);
 	block_timer[client_attacker] = true;
-}
-
-public OnCVarChange(Handle convar_hndl, const String:oldValue[], const String:newValue[])
-{
-	GetCVars();
-}
-
-GetCVars()
-{
-	show_damage = GetConVarBool(cvar_show_damage);
-	show_damage_ff = GetConVarBool(cvar_show_damage_ff);
-	show_damage_own_dmg = GetConVarBool(cvar_show_damage_own_dmg);
-	show_damage_text_area = GetConVarInt(cvar_show_damage_text_area);
 }
