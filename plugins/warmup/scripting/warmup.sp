@@ -20,38 +20,22 @@ public Plugin:myinfo =
 	url = "https://forums.alliedmods.net/showthread.php?t=186001"
 }
 
-enum Integers
-{
-	CountDown,
-	ModGravity
-};
 
-enum Bools
-{
-	PluginEnabled,
-	ModFF
-};
+ConVar c_PluginEnabled;
+ConVar c_WarmupTime;
+ConVar c_WarmupTextColor;
+ConVar c_ModFF;
+ConVar c_FF;
+ConVar c_BQ;
+ConVar c_ElectionTime;
 
-enum Handles
-{
-	Handle:PluginEnabled,
-	Handle:WarmupTime,
-	Handle:WarmupEndMessage,
-	Handle:WarmupTextColor,
-	Handle:ModFF,
-	Handle:ModGravity,
-	Handle:FF,
-	Handle:Gravity,
-	Handle:HudText,
-	Handle:BQ,
-};
+Handle h_HudText;
 
-new g_Integer[Integers],
-	bool:g_Bool[Bools],
-	g_Handle[Handles] = {INVALID_HANDLE, ...},
-	g_iTextColor[3],
-	PlayerManager,
-	Commanders[2];
+int CountDown;
+new g_iTextColor[3];
+new PlayerManager;
+new Commanders[2];
+bool PluginEnabled;
 
 int CANDIDATES[MAXPLAYERS+1] = {0, ...};
 
@@ -71,7 +55,7 @@ char PriorityPlayers[][] = {
 };
 
 bool lowRestricted = false;
-int g_iPlayerManager;
+//new g_iPlayerManager;
 /*
 new String:TaintedPlayers[1][32] = {
 	"STEAM_1:0:7307733"		//1 roamn
@@ -82,41 +66,37 @@ public OnPluginStart()
 {
 	CreateConVar("ndix_warmup_version", PLUGIN_VERSION, NAME, FCVAR_NOTIFY | FCVAR_DONTRECORD);
 
-	g_Handle[PluginEnabled] 	=	CreateConVar("sm_warmup_enabled", "1", "0 to disable warmup");
-	g_Handle[WarmupTime] 		=	CreateConVar("sm_warmup_time", "100.0", "Sets the warmup time.", FCVAR_NONE, true, 5.0, false);
-	g_Handle[WarmupEndMessage] 	= 	CreateConVar("sm_warmup_end_message", "Engage Post-Nuclear Combat!", "Sets the warmup end message. [Max Length == 100 characters]");
-	g_Handle[WarmupTextColor] 	= 	CreateConVar("sm_warmup_text_color", "0 255 0", "Set the warmup text RGB values seperated by spaces.");
+	c_PluginEnabled 	=	CreateConVar("sm_warmup_enabled", "1", "0 to disable warmup");
+	c_WarmupTime 		=	CreateConVar("sm_warmup_time", "100.0", "Sets the warmup time.", FCVAR_NONE, true, 5.0, false);
+	c_WarmupTextColor 	= 	CreateConVar("sm_warmup_text_color", "0 255 0", "Set the warmup text RGB values seperated by spaces.");
+	c_ModFF 			= 	CreateConVar("sm_warmup_modify_ff", "1", "Enabling this Cvar will turn FF on durning the warmup round, then back off when it ends.");
+	c_FF				=	FindConVar("mp_friendlyfire");
+	c_BQ				=	FindConVar("bot_quota");
+	c_ElectionTime		=	FindConVar("nd_commander_election_time");
 
-	g_Handle[ModFF] 			= 	CreateConVar("sm_warmup_modify_ff", "1", "Enabling this Cvar will turn FF on durning the warmup round, then back off when it ends.");
-	g_Handle[ModGravity] 		= 	CreateConVar("sm_warmup_modify_gravity", "0", "0 = Don't change gravity; any > 0 will set gravity to that value, then return to default after the warmup round.", FCVAR_NONE, true, 0.0, false);
+	h_HudText = CreateHudSynchronizer();
 
-	g_Handle[FF]				=	FindConVar("mp_friendlyfire");
-	g_Handle[BQ]				=	FindConVar("bot_quota");
-	g_Handle[Gravity]			=	FindConVar("sv_gravity");
-
+	SetConVarBounds(FindConVar("mp_minplayers"), ConVarBound_Upper, true, 100.0);
 
 	AddCommandListener(CMD_CancelSpawn, "postpone_spawn");
 	AddCommandListener(Command_Apply, "applyforcommander");
 	//HookEvent("round_start", Event_RoundStart, EventHookMode_PostNoCopy);
-
-	SetConVarBounds(FindConVar("mp_minplayers"), ConVarBound_Upper, true, 100.0);
-
-	g_Handle[HudText] = CreateHudSynchronizer();
 
 	AutoExecConfig(true, "ndix_warmup");
 }
 
 public OnMapStart()
 {
-	GetConVarData();
-
-	if (!g_Bool[PluginEnabled]) {
+	PluginEnabled = c_PluginEnabled.BoolValue;
+	if (!PluginEnabled) {
 		return;
 	}
 
-	g_iPlayerManager = FindEntityByClassname(-1, "nd_player_manager");
+	CountDown = RoundToFloor(c_WarmupTime.FloatValue);
+	c_ElectionTime.IntValue = CountDown;
+	GetHudTextColors();
 
-
+	//g_iPlayerManager = FindEntityByClassname(-1, "nd_player_manager");
 	for (int c=0; c<MAXPLAYERS+1; c++) {
 		CANDIDATES[c] = 0;
 	}
@@ -128,56 +108,47 @@ public OnMapStart()
 
 	CreateTimer(1.0, WarmupRoundTimer, _, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
 
-
 	SetClientSpawnPoint(0);	//find the Tgates' origins
 
-	if (g_Bool[ModFF]) {
-		SetConVarBool(g_Handle[FF], true);
-	}
-
-	if (g_Integer[ModGravity] > 0) {
-		SetConVarInt(g_Handle[Gravity], g_Integer[ModGravity]);
+	if (c_ModFF.BoolValue) {
+		c_FF.BoolValue = true;
 	}
 
 	lowRestricted = false;
 	CreateTimer(140.0, RestrictLow, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE);
 }
 
-public Action:RestrictLow(Handle hTimer, Handle dp) {
+public Action RestrictLow(Handle hTimer, Handle dp) {
 	lowRestricted = false;
 	PrintToChatAll("\x04[NDix] low-level commanders restriction removed");
 }
 
 
-public Action:WarmupRoundTimer(Handle timer)
+public Action WarmupRoundTimer(Handle timer)
 {
-	g_Integer[CountDown]--;
+	CountDown--;
 
-	SetHudTextParams(-1.0, 0.4, 1.0, g_iTextColor[0], g_iTextColor[1], g_iTextColor[2], 255);
+	SetHudTextParams(-1.0, 0.4, 1.0, g_iTextColor[0], g_iTextColor[1], g_iTextColor[2], 100);
 	for (int i = 1; i <= MaxClients; i++) {
 		if (IsClientInGame(i)) {
 			if(CANDIDATES[i]) {
-				ShowSyncHudText(i, g_Handle[HudText], "Your application confirmed\nWait for the end of the election time (%d)", g_Integer[CountDown]);
+				ShowSyncHudText(i, h_HudText, "Your application confirmed\nWait for the end of the election time (%d)", CountDown);
 			} else {
-				ShowSyncHudText(i, g_Handle[HudText], "Apply for commander now (%d)", g_Integer[CountDown]);
+				ShowSyncHudText(i, h_HudText, "Apply for commander now (%d)", CountDown);
 			}
 		}
 	}
 
-	if (g_Integer[CountDown] == 5 && g_Bool[PluginEnabled])
+	if (CountDown == 5 && PluginEnabled)
 	{
 		BalanceTeams();
 		PrintToChatAll("[NDix] Balanced Teams");
 	}
 
-	else if (g_Integer[CountDown] <= 0)
+	else if (CountDown <= 0)
 	{
-		if (g_Bool[ModFF]) {
-			SetConVarBool(g_Handle[FF], false);
-		}
-
-		if (g_Integer[ModGravity] > 0) {
-			ResetConVar(g_Handle[Gravity]);
+		if (c_ModFF.BoolValue) {
+			c_FF.BoolValue = false;
 		}
 
 		/*
@@ -192,16 +163,17 @@ public Action:WarmupRoundTimer(Handle timer)
 		*/
 		ServerCommand("mp_minplayers 0");
 
-		g_Bool[PluginEnabled] = false;
+		CreateTimer(2.0, PromoteNow);
 
-		CreateTimer(1.0, PromoteNow);
+		PluginEnabled = false;
+
 		return Plugin_Stop;
 	}
 
 	return Plugin_Continue;
 }
 
-public Action:PromoteNow(Handle Timer) {
+public Action PromoteNow(Handle Timer) {
 	for (int i=0;i<2; i++) {
 		if (Commanders[i] && IsClientInGame(Commanders[i])) {
 			//FakeClientCommand(Commanders[i], "applyforcommander");
@@ -211,40 +183,43 @@ public Action:PromoteNow(Handle Timer) {
 	return Plugin_Stop;
 }
 //can't cancel spawning to avoid being balanced
-public Action:CMD_CancelSpawn(client, const String:command[], args)
+public Action CMD_CancelSpawn(client, const String:command[], args)
 {
-	if (g_Bool[PluginEnabled]) {
+	if (PluginEnabled) {
 		return Plugin_Handled;
 	} else {
 		return Plugin_Continue;
 	}
 }
 
+
 //force spawn in warmup round so their level loads
 public OnClientPutInServer(client)
 {
-	if (g_Bool[PluginEnabled] && g_Bool[PluginEnabled] && !IsFakeClient(client))
+	if (PluginEnabled && !IsFakeClient(client))
 		CreateTimer(3.0, ForceSpawn, GetClientUserId(client), TIMER_FLAG_NO_MAPCHANGE);
 }
 
-public Action:ForceSpawn(Handle timer, any:Userid)
+public Action ForceSpawn(Handle timer, any userid)
 {
-	int client = GetClientOfUserId(Userid);
+	int client = GetClientOfUserId(userid);
+	if (!client || !PluginEnabled)
+	{
+		return Plugin_Continue;
+	}
 
-	if (!client || !g_Bool[PluginEnabled])
-	{}
-
-	else if (IsClientInGame(client))
+	if (IsClientInGame(client))
 	{
 		FakeClientCommand(client, "jointeam 0");
 		FakeClientCommand(client, "wjoinclass %d 0", GetRandomInt(0,3));
 		SetClientSpawnPoint(client);
 		FakeClientCommand(client, "readytoplay");
+	} else {
+		CreateTimer(0.5, ForceSpawn, userid, TIMER_FLAG_NO_MAPCHANGE);
 	}
-
-	else
-		CreateTimer(0.5, ForceSpawn, Userid, TIMER_FLAG_NO_MAPCHANGE);
+	return Plugin_Continue;
 }
+
 
 SetClientSpawnPoint(client)
 {
@@ -282,14 +257,15 @@ SetClientSpawnPoint(client)
 
 BalanceTeams()
 {
+	PrintToChatAll("balancing");
 	Handle Array = CreateArray(4, MaxClients+1);
 	int count = 80;
 	int client = 1;
-	bool team = true;
 	int found = 0;
 
+	bool team = true;
 	SetArrayCell(Array, 0, -1);
-	SetConVarInt(g_Handle[BQ], 0);
+	c_BQ.IntValue = 0;
 
 	for (; client <= MaxClients; client++)
 	{
@@ -381,18 +357,18 @@ BalanceTeams()
 	}
 
 	if (found < 12) {
-		SetConVarInt(g_Handle[BQ], (12 - found));
+		c_BQ.IntValue = (12 - found);
 	}
 
 	CloseHandle(Array);
 }
 
 
-public Action:Command_Apply(int client, const char[] command, args)
+public Action Command_Apply(int client, const char[] command, args)
 {
+	/*
 	int g_iRankOffset = FindSendPropInfo("CNDPlayerResource", "m_iPlayerRank");
 	int rank = GetEntData(g_iPlayerManager, g_iRankOffset + 4*client);
-	/*
 	if (rank < 15 && lowRestricted) {
 		PrintToChat(client, "\x04Players with level < 15 cant apply for commander yet, try it in a minute again");
 		return Plugin_Handled;
@@ -403,25 +379,15 @@ public Action:Command_Apply(int client, const char[] command, args)
 		return Plugin_Continue;
 	}
 
-	if (!g_Bool[PluginEnabled]) {
+	if (!PluginEnabled) {
 		return Plugin_Continue;
 	}
 
 	CANDIDATES[client] = client;
 	PrintToChat(client, "\x04Your application confirmed, please wait.");
 
-	return Plugin_Handled;
-}
-
-
-//run from OnMapStart
-GetConVarData()
-{
-	g_Bool[PluginEnabled] = GetConVarBool(g_Handle[PluginEnabled]);
-	g_Integer[CountDown] = RoundToFloor(GetConVarFloat(g_Handle[WarmupTime]));
-	GetHudTextColors();
-	g_Bool[ModFF] = GetConVarBool(g_Handle[ModFF]);
-	g_Integer[ModGravity] = GetConVarInt(g_Handle[ModGravity]);
+	return Plugin_Continue;
+	//return Plugin_Handled;
 }
 
 GetHudTextColors()
@@ -429,7 +395,7 @@ GetHudTextColors()
 	int len;
 	char Colors[16];
 	char Temp[16];
-	GetConVarString(g_Handle[WarmupTextColor], Colors, 16);
+	GetConVarString(c_WarmupTextColor, Colors, 16);
 
 	for (int i = 0; i <= 2; i++)
 	{
