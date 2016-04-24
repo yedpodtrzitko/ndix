@@ -1,5 +1,6 @@
 /*
-    Trigger Stalemate on ...stalemate, you know
+    The default ND behaviour is to trigger Victory Event on the end no matter what.
+    This plugin triggers Stalemate when no bunker is destroyed (or team eliminated) instead
 
     0.1     initial version
 
@@ -10,22 +11,10 @@
 #include <sdktools>
 
 
-#define PLUGIN_VERSION "0.1.0"
+#define PLUGIN_VERSION "0.1.1"
 #define DEBUG 0
 
-enum Bools {
-    Enabled,
-}
-
-enum Handles {
-    Handle:Enabled,
-}
-
-new g_Handle[Handles] = {INVALID_HANDLE},
-    bool:g_Bools[Bools];
-
-
-public Plugin:myinfo = {
+public Plugin myinfo = {
     name = "Stalemate trigger",
     author = "yed_",
     description = "Trigger stalemate on T zero",
@@ -36,18 +25,14 @@ public Plugin:myinfo = {
 public OnPluginStart() {
     CreateConVar("sm_cake_event_version", PLUGIN_VERSION, "ND Stalemate version", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_NOTIFY|FCVAR_DONTRECORD);
 
-    g_Handle[Enabled] = CreateConVar("sm_stalemate_enabled", "1", "Flag to (de)activate the plugin");
-    g_Bools[Enabled] = GetConVarBool(g_Handle[Enabled]);
-    HookConVarChange(g_Handle[Enabled], OnCVarChange);
-
     HookEvent("round_win", Event_RoundEnd, EventHookMode_Pre);
 }
 
-public Action:Event_RoundEnd(Handle:event, const String:name[], bool:dontBroadcast) {
-    new type = GetEventInt(event, "type");
+public Action Event_RoundEnd(Handle event, char[] name, bool dontBroadcast) {
+    int type = GetEventInt(event, "type");
     if (type == 4) {
-        new ent = FindEntityByClassname(-1, "nd_logic_custom");
-        new Handle:evt = CreateEvent("round_win");
+        int ent = FindEntityByClassname(-1, "nd_logic_custom");
+        Handle evt = CreateEvent("round_win");
 
         if (ent == -1)
         {
@@ -64,16 +49,4 @@ public Action:Event_RoundEnd(Handle:event, const String:name[], bool:dontBroadca
     }
 
     return Plugin_Continue;
-}
-
-
-
-public OnCVarChange(Handle:convar_hndl, const String:oldValue[], const String:newValue[])
-{
-	GetCVars();
-}
-
-GetCVars()
-{
-	g_Bools[Enabled] = GetConVarBool(g_Handle[Enabled]);
 }

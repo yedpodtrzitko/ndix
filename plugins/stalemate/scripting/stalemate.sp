@@ -1,5 +1,6 @@
 /*
-    Trigger Stalemate on ...stalemate, you know
+    The default ND behaviour is to trigger Victory Event on the end no matter what.
+    This plugin triggers Stalemate when no bunker is destroyed (or team eliminated) instead
 
     0.1     initial version
 
@@ -10,10 +11,10 @@
 #include <sdktools>
 
 
-#define PLUGIN_VERSION "0.1.0"
+#define PLUGIN_VERSION "0.1.1"
 #define DEBUG 0
 
-public Plugin:myinfo = {
+public Plugin myinfo = {
     name = "Stalemate trigger",
     author = "yed_",
     description = "Trigger stalemate on T zero",
@@ -27,7 +28,7 @@ public OnPluginStart() {
     HookEvent("round_win", Event_RoundEnd, EventHookMode_Pre);
 }
 
-public Action:Event_RoundEnd(Handle event, const String:name[], bool dontBroadcast) {
+public Action Event_RoundEnd(Handle event, char[] name, bool dontBroadcast) {
     int type = GetEventInt(event, "type");
     if (type == 4) {
         int ent = FindEntityByClassname(-1, "nd_logic_custom");
