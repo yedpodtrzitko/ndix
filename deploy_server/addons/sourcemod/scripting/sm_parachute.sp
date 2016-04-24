@@ -41,6 +41,8 @@
   2.5   Fixed this error: "Can't create physics object for model/parachute/parachute_carbon.mdl".
   2.6   Don't use OnGameFrame
         Fix Nuclear Dawn Support
+  2.7   Bump Syntax
+
   Description:
   
 	If cost = 0 then Everybody have a parachute.
@@ -121,7 +123,7 @@
 #include <sourcemod>
 #include <sdktools>
 
-#define PARACHUTE_VERSION 	"2.6"
+#define PARACHUTE_VERSION 	"2.7"
 
 //Parachute Model
 #define PARACHUTE_MODEL		"parachute_carbon"
@@ -130,50 +132,50 @@
 #define PARACHUTE_PACK		"pack_carbon"
 #define PARACHUTE_TEXTURE	"parachute_carbon"
 
-new g_iVelocity = -1;
-new g_iMoney = -1;
-new g_maxplayers = -1;
+int g_iVelocity = -1;
+int g_iMoney = -1;
+int g_maxplayers = -1;
 
-new String:g_game[30];
-new String:path_model[256];
-new String:path_pack[256];
-new String:path_texture[256];
+char g_game[30];
+char path_model[256];
+char path_pack[256];
+char path_texture[256];
 
-new Handle:g_fallspeed = INVALID_HANDLE;
-new Handle:g_enabled = INVALID_HANDLE;
-new Handle:g_linear = INVALID_HANDLE;
-new Handle:g_msgtype = INVALID_HANDLE;
-new Handle:g_cost = INVALID_HANDLE;
-new Handle:g_payback = INVALID_HANDLE;
-new Handle:g_welcome = INVALID_HANDLE;
-new Handle:g_roundmsg = INVALID_HANDLE;
-new Handle:g_version = INVALID_HANDLE;
-new Handle:g_model = INVALID_HANDLE;
-new Handle:g_decrease = INVALID_HANDLE;
-new Handle:g_button = INVALID_HANDLE;
+ConVar g_fallspeed;
+ConVar g_enabled;
+ConVar g_linear;
+ConVar g_msgtype;
+ConVar g_cost;
+ConVar g_payback;
+ConVar g_welcome;
+ConVar g_roundmsg;
+ConVar g_version;
+ConVar g_model;
+ConVar g_decrease;
+ConVar g_button;
 
-new cl_flags;
+int cl_flags;
 float speed[3];
 bool isfallspeed;
 
-new USE_BUTTON;
-new String:ButtonText[265];
+int USE_BUTTON;
+char ButtonText[265];
 
-new bool:inUse[MAXPLAYERS+1];
-new bool:hasPara[MAXPLAYERS+1];
-new bool:hasModel[MAXPLAYERS+1];
-new Parachute_Ent[MAXPLAYERS+1];
+bool inUse[MAXPLAYERS+1];
+bool hasPara[MAXPLAYERS+1];
+bool hasModel[MAXPLAYERS+1];
+int Parachute_Ent[MAXPLAYERS+1];
 
-public Plugin:myinfo =
+public Plugin myinfo =
 {
 	name = "SM Parachute",
-	author = "SWAT_88",
+	author = "SWAT_88, yed_",
 	description = "To use your parachute press and hold your E(+use) button while falling.",
 	version = PARACHUTE_VERSION,
 	url = "http://www.sourcemod.net/"
 };
 
-public OnPluginStart()
+public void OnPluginStart()
 {
 	LoadTranslations ("sm_parachute.phrases");
 
@@ -193,40 +195,26 @@ public OnPluginStart()
 	g_iMoney = FindSendPropOffs("CCSPlayer", "m_iAccount");
 	g_maxplayers = GetMaxClients();
 	SetConVarString(g_version, PARACHUTE_VERSION);
-	
+
 	InitModel();
 	InitGameMode();
-	
-	HookEvent("player_death",PlayerDeath);
-	HookEvent("player_spawn",PlayerSpawn);
-	HookConVarChange(g_enabled, CvarChange_Enabled);
-	HookConVarChange(g_linear, CvarChange_Linear);
-	HookConVarChange(g_cost, CvarChange_Cost);
-	HookConVarChange(g_model, CvarChange_Model);
-	HookConVarChange(g_button, CvarChange_Button);
+
+	HookEvent("player_death", PlayerDeath);
+	g_enabled.AddChangeHook(CvarChange_Enabled);
+	g_linear.AddChangeHook(CvarChange_Linear);
+	g_cost.AddChangeHook(CvarChange_Cost);
+	g_model.AddChangeHook(CvarChange_Model);
+	g_button.AddChangeHook(CvarChange_Button);
 }
 
-public OnPluginEnd(){
-	CloseHandle(g_fallspeed);
-	CloseHandle(g_enabled);
-	CloseHandle(g_linear);
-	CloseHandle(g_msgtype);
-	CloseHandle(g_cost);
-	CloseHandle(g_payback);
-	CloseHandle(g_welcome);
-	CloseHandle(g_roundmsg);
-	CloseHandle(g_version);
-	CloseHandle(g_model);
-	CloseHandle(g_decrease);
-}
 
-public InitModel(){
+public void InitModel(){
 	Format(path_model,255,"models/parachute/%s",PARACHUTE_MODEL);
 	Format(path_pack,255,"materials/models/parachute/%s",PARACHUTE_PACK);
 	Format(path_texture,255,"materials/models/parachute/%s",PARACHUTE_TEXTURE);
 }
 
-public InitGameMode(){
+public void InitGameMode(){
 	GetGameFolderName(g_game, 29);
 	if(StrEqual(g_game,"tf",false)){
 		SetConVarInt(g_button,2);
@@ -237,9 +225,9 @@ public InitGameMode(){
 	}
 }
 
-public OnMapStart(){
-	new String:path[256];
-	
+public void OnMapStart(){
+	char path[256];
+
 	strcopy(path,255,path_model);
 	StrCat(path,255,".mdl")
 	PrecacheModel(path,true);
@@ -259,7 +247,7 @@ public OnMapStart(){
 	strcopy(path,255,path_model);
 	StrCat(path,255,".sw.vtx")
 	AddFileToDownloadsTable(path);
-	
+
 	strcopy(path,255,path_model);
 	StrCat(path,255,".vvd")
 	AddFileToDownloadsTable(path);
@@ -271,27 +259,26 @@ public OnMapStart(){
 	strcopy(path,255,path_pack);
 	StrCat(path,255,".vmt")
 	AddFileToDownloadsTable(path);
-	
+
 	strcopy(path,255,path_pack);
 	StrCat(path,255,".vtf")
 	AddFileToDownloadsTable(path);
-	
+
 	strcopy(path,255,path_texture);
 	StrCat(path,255,".vmt")
 	AddFileToDownloadsTable(path);
-	
+
 	strcopy(path,255,path_texture);
 	StrCat(path,255,".vtf")
 	AddFileToDownloadsTable(path);
 }
 
-public OnEventShutdown()
+public void OnEventShutdown()
 {
 	UnhookEvent("player_death",PlayerDeath);
-	UnhookEvent("player_spawn",PlayerSpawn);
 }
 
-public OnClientPutInServer(client)
+public void OnClientPutInServer(client)
 {
 	inUse[client] = false;
 	hasPara[client] = false;
@@ -300,57 +287,47 @@ public OnClientPutInServer(client)
 	CreateTimer (20.0, WelcomeMsg, client);
 }
 
-public OnClientDisconnect(client){
+public void OnClientDisconnect(client){
 	g_maxplayers = GetMaxClients();
 	CloseParachute(client);
 }
 
-public Action:PlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast){
-	new client;
-	client = GetClientOfUserId(GetEventInt(event, "userid"));
-	if (GetConVarInt(g_cost) == 0){
-		CreateTimer (1.0, RoundMsg, client);
-	}
-	return Plugin_Continue;
-}
-
-public Action:PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast){
-	new client;
-	client = GetClientOfUserId(GetEventInt(event, "userid"));
+public Action PlayerDeath(Handle event, char[] name, bool dontBroadcast){
+	int client = GetClientOfUserId(GetEventInt(event, "userid"));
 	hasPara[client] = false;
 	EndPara(client);
 	return Plugin_Continue;
 }
 
-public Action:RoundMsg(Handle:timer, any:client){
-	if(GetConVarInt(g_roundmsg) == 1){
+public Action RoundMsg(Handle timer, any client){
+	if(g_roundmsg.IntValue == 1){
 		if(IsClientConnected (client) && IsClientInGame(client))
 			PrintMsg(client,"Have Got Free Parachute");
 	}
 	return Plugin_Continue;
 }
 
-public StartPara(client, bool open)
+public void StartPara(client, bool open)
 {
 	if (g_iVelocity == -1) return;
-	if (GetConVarInt(g_enabled) != 1) return;
+	if (!g_enabled.BoolValue) return;
 
-	decl Float:velocity[3];
-	decl Float:fallspeed;
-	if(hasPara[client] || GetConVarInt(g_cost) == 0){
-		fallspeed = GetConVarFloat(g_fallspeed)*(-1.0);
+	float velocity[3];
+	float fallspeed;
+	if(hasPara[client] || g_cost.IntValue == 0){
+		fallspeed = -g_fallspeed.FloatValue;
 		GetEntDataVector(client, g_iVelocity, velocity);
 		if(velocity[2] >= fallspeed){
 			isfallspeed = true;
 		}
 		if(velocity[2] < 0.0) {
-			if(isfallspeed && GetConVarInt(g_linear) == 0){
+			if(isfallspeed && g_linear.IntValue == 0){
 			}
-			else if((isfallspeed && GetConVarInt(g_linear) == 1) || GetConVarFloat(g_decrease) == 0.0){
+			else if((isfallspeed && g_linear.BoolValue) || g_decrease.FloatValue == 0.0){
 				velocity[2] = fallspeed;
 			}
 			else{
-				velocity[2] = velocity[2] + GetConVarFloat(g_decrease);
+				velocity[2] = velocity[2] + g_decrease.FloatValue;
 			}
 			TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, velocity);
 			SetEntDataVector(client, g_iVelocity, velocity);
@@ -360,16 +337,16 @@ public StartPara(client, bool open)
 	}
 }
 
-public EndPara(client)
+public void EndPara(client)
 {
-	if(GetConVarInt(g_enabled)== 1 ){
+	if(g_enabled.BoolValue){
 		SetEntityGravity(client,1.0);
 		inUse[client]=false;
 		CloseParachute(client);
 	}
 }
 
-public OpenParachute(client){
+public void OpenParachute(client){
 	if (strcmp(g_game, "nucleardawn",false) == 0 && GetEntProp(client, Prop_Send, "m_iPlayerClass") == 2) {
 		// is player invisible?
 		if ((GetEntProp(client, Prop_Send, "m_nPlayerCond") & 2) == 2) {
@@ -380,8 +357,8 @@ public OpenParachute(client){
 	decl String:path[256];
 	strcopy(path,255,path_model);
 	StrCat(path,255,".mdl")
-	
-	if(GetConVarInt(g_model) == 1){
+
+	if(g_model.IntValue == 1){
 		char[] clientParachuteID = new char[32];
 		Format(clientParachuteID, 32, "para_%d", GetClientUserId(client));
 		DispatchKeyValue(client, "targetname", clientParachuteID);
@@ -397,21 +374,21 @@ public OpenParachute(client){
 		GetClientAbsOrigin(client, Client_Origin);
 		GetClientAbsAngles(client, Client_Angles);
 		Parachute_Angles[1] = Client_Angles[1];
-        Client_Origin[2] += 20.0;
+		Client_Origin[2] += 20.0;
 		TeleportEntity(Parachute_Ent[client], Client_Origin, Parachute_Angles, NULL_VECTOR);
 		SetVariantString(clientParachuteID);
 		AcceptEntityInput(Parachute_Ent[client], "SetParent", Parachute_Ent[client], Parachute_Ent[client], 0);
 	}
 }
 
-public CloseParachute(client){
+public void CloseParachute(client){
 	if(hasModel[client] && IsValidEntity(Parachute_Ent[client])){
 		AcceptEntityInput(Parachute_Ent[client], "Kill", -1, -1, 0);
 		hasModel[client] = false;
 	}
 }
 
-public Check(client){
+public void Check(client){
     GetEntDataVector(client,g_iVelocity,speed);
     cl_flags = GetEntityFlags(client);
     if(speed[2] >= 0 || (cl_flags & FL_ONGROUND)) EndPara(client);
@@ -436,25 +413,25 @@ public Action OnPlayerRunCmd(client, &buttons, &impulse, float vel[3], float ang
     }
 }
 
-stock GetNextSpaceCount(String:text[],CurIndex){
-    new Count=0;
-    new len = strlen(text);
-    for(new i=CurIndex;i<len;i++){
-        if(text[i] == ' ') return Count;
-        else Count++;
+stock int GetNextSpaceCount(char[] text, CurIndex){
+    int Count = 0;
+    int len = strlen(text);
+    for(int i=CurIndex; i<len; i++){
+		if(text[i] == ' ') return Count;
+		else Count++;
     }
     return Count;
 }
 
-stock SendHintText(client, String:text[], any:...){
-    new String:message[192];
+stock void SendHintText(client, char[] text, any:...){
+    char message[192];
 
     VFormat(message,191,text, 2);
-    new len = strlen(message);
+    int len = strlen(message);
     if(len > 30){
-        new LastAdded=0;
-        
-        for(new i=0;i<len;i++){
+        int LastAdded=0;
+
+        for(int i=0;i<len;i++){
             if((message[i]==' ' && LastAdded > 30 && (len-i) > 10) || ((GetNextSpaceCount(text,i+1) + LastAdded)  > 34)){
                 message[i] = '\n';
                 LastAdded = 0;
@@ -462,39 +439,39 @@ stock SendHintText(client, String:text[], any:...){
             else LastAdded++;
         }
     }
-    new Handle:HintMessage = StartMessageOne("HintText",client);
+    Handle HintMessage = StartMessageOne("HintText",client);
     BfWriteByte(HintMessage,-1);
     BfWriteString(HintMessage,message);
     EndMessage();
 }
 
-public PrintMsg(client,String:msg[]){
-	new String:translation[256];
-	if(GetConVarInt(g_enabled) == 0) return;
+public void PrintMsg(client, char[] msg){
+	if(!g_enabled.BoolValue) return;
+	char translation[256];
 	Format(translation, 255, "%T", msg, LANG_SERVER, ButtonText);
-	if(GetConVarInt(g_msgtype) == 1){		
+	if(g_msgtype.IntValue == 1){
 		PrintToChat(client,"\x01\x04[SM Parachute]\x01 %s", translation);
 	}
-	else if(GetConVarInt(g_msgtype) == 2) {
-		new Handle:panel = CreatePanel();
+	else if(g_msgtype.IntValue == 2) {
+		Handle panel = CreatePanel();
 		DrawPanelText(panel,translation);
-		SendPanelToClient(panel,client,PanelHandle,5);
+		SendPanelToClient(panel, client, PanelHandle, 5);
 	}
-	else if(GetConVarInt(g_msgtype) == 3){
+	else if(g_msgtype.IntValue == 3){
 		SendHintText(client,translation);
 	}
 }
 
-public PanelHandle(Handle:menu, MenuAction:action, param1, param2){
+public PanelHandle(Menu menu, MenuAction action, param1, param2){
 }
 
-public BuyParachute(client){
-	new money;
-	new cost;
+public void BuyParachute(client){
+	int money;
+	int cost;
 	if (g_iMoney == -1) return;
-	if (hasPara[client] == false){
+	if (!hasPara[client]){
 		money = GetEntData(client,g_iMoney);
-		cost = GetConVarInt(g_cost);
+		cost = g_cost.IntValue;
 		if (cost == 0){
 			PrintMsg(client,"Have Free Parachute");
 		}
@@ -512,17 +489,17 @@ public BuyParachute(client){
 	else{
 		PrintMsg(client,"Have Parachute");
 	}
-	
+
 }
 
-public SellParachute(client){
-	new money;
-	new Float:payback;
-	new String:pb[10];
+public void SellParachute(client){
+	int money;
+	float payback;
+	char pb[10];
 	if (g_iMoney == -1) return;
-	if (hasPara[client] == true){
+	if (hasPara[client]){
 		money = GetEntData(client,g_iMoney);
-		payback = GetConVarInt(g_cost)*(GetConVarFloat(g_payback)/100);
+		payback = g_cost.IntValue * (g_payback.FloatValue / 100);
 		if ((money + payback) > 16000){
 			SetEntData(client,g_iMoney,16000);
 		}
@@ -534,7 +511,7 @@ public SellParachute(client){
 		PrintMsg(client,"Sold Parachute");
 	}
 	else{
-		if (GetConVarInt(g_cost)==0){
+		if (g_cost.IntValue == 0){
 			PrintMsg(client,"Sell Free Parachute");
 		}
 		else{
@@ -544,14 +521,14 @@ public SellParachute(client){
 }
 
 
-public Action:WelcomeMsg (Handle:timer, any:client)
+public Action WelcomeMsg (Handle timer, any client)
 {
-	if(GetConVarInt(g_enabled) == 0) return Plugin_Continue;
+	if(!g_enabled.BoolValue) return Plugin_Continue;
 
-	if (GetConVarInt (g_welcome) == 1 && IsClientConnected (client) && IsClientInGame (client))
+	if (g_welcome.BoolValue && IsClientConnected (client) && IsClientInGame (client))
 	{
 		//PrintToChat(client,"\x01\x04[SM Parachute]\x01 %T", "Welcome", LANG_SERVER);
-		if (GetConVarInt(g_cost)==0){
+		if (g_cost.IntValue == 0){
 			PrintToChat(client,"\x01\x04[SM Parachute]\x01 %T", "Parachute For Everyone", LANG_SERVER);
 		}
 		else{
@@ -563,24 +540,24 @@ public Action:WelcomeMsg (Handle:timer, any:client)
 }
 
 
-public CvarChange_Enabled(Handle:cvar, const String:oldvalue[], const String:newvalue[]){
+public void CvarChange_Enabled(ConVar cvar, char[] oldvalue, char[] newvalue){
 	if (StringToInt(newvalue) == 0){
-		for (new client = 1; client <= g_maxplayers; client++){
+		for (int client = 1; client <= g_maxplayers; client++){
 			if (IsClientInGame(client) && IsPlayerAlive(client)){
 				if (hasPara[client]){
 					SetEntityGravity(client,1.0);
 					SetEntityMoveType(client,MOVETYPE_WALK);
-					SellParachuteOff(client,GetConVarInt(g_cost));
+					SellParachuteOff(client, g_cost.IntValue);
 				}
 				PrintToChat(client,"\x01\x04[SM Parachute]\x01 %T", "Disabled", LANG_SERVER);
 			}
 		}
 	}
 	else{
-		for (new client = 1; client <= g_maxplayers; client++){
+		for (int client = 1; client <= g_maxplayers; client++){
 			if (IsClientInGame(client) && IsPlayerAlive(client)){
 				PrintToChat(client,"\x01\x04[SM Parachute]\x01 %T", "Enabled", LANG_SERVER);
-				if (GetConVarInt(g_cost)==0){
+				if (g_cost.IntValue == 0){
 					PrintToChat(client,"\x01\x04[SM Parachute]\x01 %T", "Parachute For Everyone", LANG_SERVER);
 				}
 				else{
@@ -592,9 +569,9 @@ public CvarChange_Enabled(Handle:cvar, const String:oldvalue[], const String:new
 	}
 }
 
-public CvarChange_Linear(Handle:cvar, const String:oldvalue[], const String:newvalue[]){
+public void CvarChange_Linear(ConVar cvar, const String:oldvalue[], const String:newvalue[]){
 	if (StringToInt(newvalue) == 0){
-		for (new client = 1; client <= g_maxplayers; client++){
+		for (int client = 1; client <= g_maxplayers; client++){
 			if (IsClientInGame(client) && IsPlayerAlive(client) && hasPara[client]){
 				SetEntityMoveType(client,MOVETYPE_WALK);
 			}
@@ -602,9 +579,9 @@ public CvarChange_Linear(Handle:cvar, const String:oldvalue[], const String:newv
 	}
 }
 
-public CvarChange_Cost(Handle:cvar, const String:oldvalue[], const String:newvalue[]){
+public void CvarChange_Cost(ConVar cvar, const String:oldvalue[], const String:newvalue[]){
 	if (StringToInt(newvalue) == 0){
-		for (new client = 1; client <= g_maxplayers; client++){
+		for (int client = 1; client <= g_maxplayers; client++){
 			if (IsClientInGame(client) && IsPlayerAlive(client)){
 				if (hasPara[client]) SellParachuteOff(client,StringToInt(oldvalue));
 				PrintToChat(client,"\x01\x04[SM Parachute]\x01 %T", "Parachute For Everyone", LANG_SERVER);
@@ -616,7 +593,7 @@ public CvarChange_Cost(Handle:cvar, const String:oldvalue[], const String:newval
 	}
 }
 
-public CvarChange_Button(Handle:cvar, const String:oldvalue[], const String:newvalue[]){
+public void CvarChange_Button(ConVar cvar, const String:oldvalue[], const String:newvalue[]){
 	if (StringToInt(newvalue) == 1){
 		SetButton(1);
 	}
@@ -625,9 +602,9 @@ public CvarChange_Button(Handle:cvar, const String:oldvalue[], const String:newv
 	}
 }
 
-public CvarChange_Model(Handle:cvar, const String:oldvalue[], const String:newvalue[]){
+public void CvarChange_Model(ConVar cvar, const String:oldvalue[], const String:newvalue[]){
 	if (StringToInt(newvalue) == 0){
-		for (new client = 1; client <= g_maxplayers; client++){
+		for (int client = 1; client <= g_maxplayers; client++){
 			if (IsClientInGame(client) && IsPlayerAlive(client)){
 				CloseParachute(client);
 			}
@@ -635,14 +612,14 @@ public CvarChange_Model(Handle:cvar, const String:oldvalue[], const String:newva
 	}
 }
 
-public SellParachuteOff(client,cost){
-	new money;
-	new Float:payback;
-	new String:pb[10];
+public void SellParachuteOff(client,cost){
+	int money;
+	float payback;
+	char pb[10];
 	if (g_iMoney == -1) return;
 	if (hasPara[client] == true){
 		money = GetEntData(client,g_iMoney);
-		payback = cost*(GetConVarFloat(g_payback)/100);
+		payback = cost*(g_payback.FloatValue / 100);
 		if ((money + payback) > 16000){
 			SetEntData(client,g_iMoney,16000);
 		}
