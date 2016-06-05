@@ -77,18 +77,18 @@ public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 		g_Game = Game_ND;
 	else if (StrEqual(sGame, "csgo"))
 		g_Game = Game_CSGO;
-	
+
 	// Path used for logging.
 	BuildPath(Path_SM, g_sLogPath, sizeof(g_sLogPath), "logs/SMAC.log");
-	
+
 	// Optional dependencies.
 	MarkNativeAsOptional("SBBanPlayer");
 	MarkNativeAsOptional("IRC_MsgFlaggedChannels");
 	MarkNativeAsOptional("IRC_Broadcast");
-	
+
 	API_Init();
 	RegPluginLibrary("smac");
-	
+
 	return APLRes_Success;
 }
 
@@ -97,18 +97,18 @@ public OnPluginStart()
 	LoadTranslations("smac.phrases");
 
 	// Convars.
-	g_hCvarVersion = CreateConVar("smac_version", SMAC_VERSION, "SourceMod Anti-Cheat", FCVAR_PLUGIN|FCVAR_NOTIFY|FCVAR_DONTRECORD);
+	g_hCvarVersion = CreateConVar("smac_version", SMAC_VERSION, "SourceMod Anti-Cheat", FCVAR_NOTIFY|FCVAR_DONTRECORD);
 	OnVersionChanged(g_hCvarVersion, "", "");
 	HookConVarChange(g_hCvarVersion, OnVersionChanged);
-	
-	g_hCvarWelcomeMsg = CreateConVar("smac_welcomemsg", "1", "Display a message saying that your server is protected.", FCVAR_PLUGIN, true, 0.0, true, 1.0);
-	g_hCvarBanDuration = CreateConVar("smac_ban_duration", "0", "The duration in minutes used for automatic bans. (0 = Permanent)", FCVAR_PLUGIN, true, 0.0);
-	g_hCvarLogVerbose = CreateConVar("smac_log_verbose", "0", "Include extra information about a client being logged.", FCVAR_PLUGIN, true, 0.0, true, 1.0);
-	g_hCvarIrcMode = CreateConVar("smac_irc_mode", "1", "Which messages should be sent to IRC plugins. (1 = Admin notices, 2 = Mimic log)", FCVAR_PLUGIN, true, 1.0, true, 2.0);
-	
+
+	g_hCvarWelcomeMsg = CreateConVar("smac_welcomemsg", "1", "Display a message saying that your server is protected.", FCVAR_NONE, true, 0.0, true, 1.0);
+	g_hCvarBanDuration = CreateConVar("smac_ban_duration", "0", "The duration in minutes used for automatic bans. (0 = Permanent)", FCVAR_NONE, true, 0.0);
+	g_hCvarLogVerbose = CreateConVar("smac_log_verbose", "0", "Include extra information about a client being logged.", FCVAR_NONE, true, 0.0, true, 1.0);
+	g_hCvarIrcMode = CreateConVar("smac_irc_mode", "1", "Which messages should be sent to IRC plugins. (1 = Admin notices, 2 = Mimic log)", FCVAR_NONE, true, 1.0, true, 2.0);
+
 	// Commands.
 	RegAdminCmd("smac_status", Command_Status, ADMFLAG_GENERIC, "View the server's player status.");
-	
+
 #if defined _updater_included
 	if (LibraryExists("updater"))
 	{
@@ -134,10 +134,10 @@ public OnAllPluginsLoaded()
 	{
 		SetConVarFlags(g_hCvarIrcMode, GetConVarFlags(g_hCvarIrcMode) | FCVAR_DONTRECORD);
 	}
-	
+
 	// Wait for other modules to create their convars.
 	AutoExecConfig(true, "smac");
-	
+
 	PrintToServer("SourceMod Anti-Cheat %s has been successfully loaded.", SMAC_VERSION);
 }
 
@@ -160,12 +160,12 @@ public OnClientPutInServer(client)
 public Action:Timer_WelcomeMsg(Handle:timer, any:userid)
 {
 	new client = GetClientOfUserId(userid);
-	
+
 	if (IS_CLIENT(client) && IsClientInGame(client))
 	{
 		CPrintToChat(client, "%t%t", "SMAC_Tag", "SMAC_WelcomeMsg");
 	}
-		
+
 	return Plugin_Stop;
 }
 
@@ -191,7 +191,7 @@ public Action:Command_Status(client, args)
 				strcopy(sAuthID, sizeof(sAuthID), "Unknown");
 			}
 		}
-		
+
 		PrintToConsole(client, "%6d  %-40s %N", GetClientUserId(i), sAuthID, i);
 	}
 
@@ -203,7 +203,7 @@ SMAC_RelayToIRC(const String:format[], any:...)
 	decl String:sBuffer[256];
 	SetGlobalTransTarget(LANG_SERVER);
 	VFormat(sBuffer, sizeof(sBuffer), format, 2);
-	
+
 	if (SOURCEIRC_AVAILABLE())
 	{
 		IRC_MsgFlaggedChannels("ticket", sBuffer);
@@ -227,7 +227,7 @@ API_Init()
 	CreateNative("SMAC_PrintAdminNotice", Native_PrintAdminNotice);
 	CreateNative("SMAC_CreateConVar", Native_CreateConVar);
 	CreateNative("SMAC_CheatDetected", Native_CheatDetected);
-	
+
 	g_OnCheatDetected = CreateGlobalForward("SMAC_OnCheatDetected", ET_Event, Param_Cell, Param_String, Param_Cell, Param_Cell);
 }
 
@@ -244,7 +244,7 @@ public Native_Log(Handle:plugin, numParams)
 	GetPluginBasename(plugin, sFilename, sizeof(sFilename));
 	FormatNativeString(0, 1, 2, sizeof(sBuffer), _, sBuffer);
 	LogToFileEx(g_sLogPath, "[%s] %s", sFilename, sBuffer);
-	
+
 	// Relay log to IRC.
 	if (GetConVarInt(g_hCvarIrcMode) == 2)
 	{
@@ -256,12 +256,12 @@ public Native_Log(Handle:plugin, numParams)
 public Native_LogAction(Handle:plugin, numParams)
 {
 	new client = GetNativeCell(1);
-	
+
 	if (!IS_CLIENT(client) || !IsClientConnected(client))
 	{
 		ThrowNativeError(SP_ERROR_INDEX, "Client index %i is invalid", client);
 	}
-	
+
 	decl String:sAuthID[MAX_AUTHID_LENGTH];
 	if (!GetClientAuthId(client, AuthId_Steam2, sAuthID, sizeof(sAuthID), true))
 	{
@@ -274,18 +274,18 @@ public Native_LogAction(Handle:plugin, numParams)
 			strcopy(sAuthID, sizeof(sAuthID), "Unknown");
 		}
 	}
-	
+
 	decl String:sIP[17];
 	if (!GetClientIP(client, sIP, sizeof(sIP)))
 	{
 		strcopy(sIP, sizeof(sIP), "Unknown");
 	}
-	
+
 	decl String:sVersion[16], String:sFilename[64], String:sBuffer[256];
 	GetPluginInfo(plugin, PlInfo_Version, sVersion, sizeof(sVersion));
 	GetPluginBasename(plugin, sFilename, sizeof(sFilename));
 	FormatNativeString(0, 2, 3, sizeof(sBuffer), _, sBuffer);
-	
+
 	// Verbose client logging.
 	if (GetConVarBool(g_hCvarLogVerbose) && IsClientInGame(client))
 	{
@@ -296,7 +296,7 @@ public Native_LogAction(Handle:plugin, numParams)
 		GetClientWeapon(client, sWeapon, sizeof(sWeapon));
 		iTeam = GetClientTeam(client);
 		iLatency = RoundToNearest(GetClientAvgLatency(client, NetFlow_Outgoing) * 1000.0);
-		
+
 		LogToFileEx(g_sLogPath,
 			"[%s | %s] %N (ID: %s | IP: %s) %s\n\tMap: %s | Origin: %.0f %.0f %.0f | Angles: %.0f %.0f %.0f | Weapon: %s | Team: %i | Latency: %ims",
 			sFilename,
@@ -316,7 +316,7 @@ public Native_LogAction(Handle:plugin, numParams)
 	{
 		LogToFileEx(g_sLogPath, "[%s | %s] %N (ID: %s | IP: %s) %s", sFilename, sVersion, client, sAuthID, sIP, sBuffer);
 	}
-	
+
 	// Relay minimal log to IRC.
 	if (GetConVarInt(g_hCvarIrcMode) == 2)
 	{
@@ -330,11 +330,11 @@ public Native_Ban(Handle:plugin, numParams)
 	decl String:sVersion[16], String:sReason[256];
 	new client = GetNativeCell(1);
 	new duration = GetConVarInt(g_hCvarBanDuration);
-	
+
 	GetPluginInfo(plugin, PlInfo_Version, sVersion, sizeof(sVersion));
 	FormatNativeString(0, 2, 3, sizeof(sReason), _, sReason);
 	Format(sReason, sizeof(sReason), "SMAC %s: %s", sVersion, sReason);
-	
+
 	if (SOURCEBANS_AVAILABLE())
 	{
 		SBBanPlayer(0, client, duration, sReason);
@@ -345,7 +345,7 @@ public Native_Ban(Handle:plugin, numParams)
 		FormatEx(sKickMsg, sizeof(sKickMsg), "%T", "SMAC_Banned", client);
 		BanClient(client, duration, BANFLAG_AUTO, sReason, sKickMsg, "SMAC");
 	}
-	
+
 	KickClient(client, sReason);
 }
 
@@ -363,7 +363,7 @@ public Native_PrintAdminNotice(Handle:plugin, numParams)
 			CPrintToChat(i, "%t%s", "SMAC_Tag", sBuffer);
 		}
 	}
-	
+
 	// Relay admin notice to IRC.
 	if (GetConVarInt(g_hCvarIrcMode) == 1)
 	{
@@ -382,17 +382,17 @@ public Native_CreateConVar(Handle:plugin, numParams)
 	GetNativeString(1, name, sizeof(name));
 	GetNativeString(2, defaultValue, sizeof(defaultValue));
 	GetNativeString(3, description, sizeof(description));
-	
+
 	new flags = GetNativeCell(4);
 	new bool:hasMin = bool:GetNativeCell(5);
 	new Float:min = Float:GetNativeCell(6);
 	new bool:hasMax = bool:GetNativeCell(7);
 	new Float:max = Float:GetNativeCell(8);
-	
+
 	decl String:sFilename[64];
 	GetPluginBasename(plugin, sFilename, sizeof(sFilename));
 	Format(description, sizeof(description), "[%s] %s", sFilename, description);
-	
+
 	return _:CreateConVar(name, defaultValue, description, flags, hasMin, min, hasMax, max);
 }
 
@@ -400,31 +400,31 @@ public Native_CreateConVar(Handle:plugin, numParams)
 public Native_CheatDetected(Handle:plugin, numParams)
 {
 	new client = GetNativeCell(1);
-	
+
 	if (!IS_CLIENT(client) || !IsClientConnected(client))
 	{
 		ThrowNativeError(SP_ERROR_INDEX, "Client index %i is invalid", client);
 	}
-	
+
 	// Block duplicate detections.
 	if (IsClientInKickQueue(client))
 	{
 		return _:Plugin_Handled;
 	}
-	
+
 	decl String:sFilename[64];
 	GetPluginBasename(plugin, sFilename, sizeof(sFilename));
-	
+
 	new DetectionType:type = Detection_Unknown;
 	new Handle:info = INVALID_HANDLE;
-	
+
 	if (numParams == 3)
 	{
 		// caller is using newer cheat detected native
 		type = DetectionType:GetNativeCell(2);
 		info = Handle:GetNativeCell(3);
 	}
-	
+
 	// forward Action:SMAC_OnCheatDetected(client, const String:module[], DetectionType:type, Handle:info);
 	new Action:result = Plugin_Continue;
 	Call_StartForward(g_OnCheatDetected);
@@ -433,6 +433,6 @@ public Native_CheatDetected(Handle:plugin, numParams)
 	Call_PushCell(type);
 	Call_PushCell(info);
 	Call_Finish(result);
-	
+
 	return _:result;
 }

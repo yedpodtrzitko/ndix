@@ -13,7 +13,7 @@
 		You dont stay hanging on the wall.
 		You don't bounce when you touch the ground.
 		You dont have Gravity 0.1 when you jump holding the E button.
-  1.4	Fixed a	serious bug: 
+  1.4	Fixed a	serious bug:
 		Maxplayers are now correctly counted.
   1.5	Added new features:
 		Information, welcome and status messages in Chat, Panel or BottomCenterText!
@@ -44,7 +44,7 @@
   2.7   Bump Syntax
 
   Description:
-  
+
 	If cost = 0 then Everybody have a parachute.
 	To use your parachute press and hold your E(+use)/Space(+jump) button while falling.
 	If you are running a TF2 server the button will automatic change to Space.
@@ -52,9 +52,9 @@
 	Sidenote:
 	To change the model you have to edit the global variables for the names. Afterwards recompile sm_parachute.sp. Here is a tutorial.
 	To change the texture you have to recompile the smd and change its content. Here is the Model source.
-	
+
   Commands:
-  
+
 	Press E(+use) to slow down your fall.
 	No more binding Keys!
 	Write !bp or !buy_parachute in Chat to buy a parachute (Only if cost > 0) !
@@ -65,30 +65,30 @@
 	sm_parachute_enabled 	"1"		- 0: disables the plugin - 1: enables the plugin
 
 	sm_parachute_fallspeed "100"	- speed of the fall when you use the parachute
-	
+
 	sm_parachute_linear 	"1"		- 0: disables linear fallspeed - 1: enables it
-	
+
 	sm_parachute_msgtype 	"1"		- 0: disables Information - 1: Chat - 2: Panel - 3: BottomCenter
-	
+
 	sm_parachute_cost 		"0"		- cost of the parachute (CS ONLY) (If cost = 0 then free for everyone)
 
 	sm_parachute_payback 	"75"	- how many percent of the parachute cost you get when you sell your parachute (ie. 75% of 1000 = 750$)
-	
+
 	sm_parachute_welcome	"1"		- 0: disables Welcome Message - 1: enables it
-	
+
 	sm_parachute_roundmsg	"1"		- 0: disables Round Message - 1: enables it
-	
+
 	sm_parachute_model		"1"		- 0: dont use the model - 1: display the Model
-	
+
 	sm_parachute_decrease	"50"	- 0: dont use Realistic velocity-decrease - x: sets the velocity-decrease.
-	
+
 	sm_parachute_button		"2"		- 1: uses button +USE for parachute usage. - 2: uses button +JUMP.
-	
+
   Supported Languages:
-  
+
 	en	English
 	de	German
-	
+
   If you write a Translation post it in this thread.
 
   Setup (SourceMod):
@@ -96,18 +96,18 @@
 	Install the smx file to addons\sourcemod\plugins.
 	Install the translation file to addons\sourcemod\translations.
 	(Re)Load Plugin or change Map.
-	
+
   TO DO:
-  
+
 	Smooth model movement.(I will need expert help for this)
 	Animations.(I will not code it, it's too complicate, but any other expert can code it. It's Open Source)
-	
+
   Copyright:
-  
+
 	Everybody can edit this plugin and copy this plugin.
-	
+
   Thanks to:
-  
+
 	Greyscale
 	Pinkfairie
 	bl4nk
@@ -115,7 +115,7 @@
 	Knagg0
 	KRoT@L
 	JTP10181
-	
+
   HAVE FUN!!!
 
 *******************************************************************************/
@@ -191,8 +191,8 @@ public void OnPluginStart()
 	g_model = CreateConVar("sm_parachute_model","1");
 	g_decrease = CreateConVar("sm_parachute_decrease","50");
 	g_button = CreateConVar("sm_parachute_button","1");
-	g_iVelocity = FindSendPropOffs("CBasePlayer", "m_vecVelocity[0]");
-	g_iMoney = FindSendPropOffs("CCSPlayer", "m_iAccount");
+	g_iVelocity = FindSendPropInfo("CBasePlayer", "m_vecVelocity[0]");
+	g_iMoney = FindSendPropInfo("CCSPlayer", "m_iAccount");
 	g_maxplayers = GetMaxClients();
 	SetConVarString(g_version, PARACHUTE_VERSION);
 
@@ -315,7 +315,7 @@ public void StartPara(client, bool open)
 	float velocity[3];
 	float fallspeed;
 	if(hasPara[client] || g_cost.IntValue == 0){
-		fallspeed = -g_fallspeed.FloatValue;
+		fallspeed = g_fallspeed.FloatValue * -1;
 		GetEntDataVector(client, g_iVelocity, velocity);
 		if(velocity[2] >= fallspeed){
 			isfallspeed = true;
@@ -347,14 +347,14 @@ public void EndPara(client)
 }
 
 public void OpenParachute(client){
-	if (strcmp(g_game, "nucleardawn",false) == 0 && GetEntProp(client, Prop_Send, "m_iPlayerClass") == 2) {
+	if (strcmp(g_game, "nucleardawn", false) == 0 && GetEntProp(client, Prop_Send, "m_iPlayerClass") == 2) {
 		// is player invisible?
 		if ((GetEntProp(client, Prop_Send, "m_nPlayerCond") & 2) == 2) {
 			return;
 		}
 	}
 
-	decl String:path[256];
+	char[] path = new char[256];
 	strcopy(path,255,path_model);
 	StrCat(path,255,".mdl")
 

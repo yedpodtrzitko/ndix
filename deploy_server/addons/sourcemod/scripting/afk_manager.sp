@@ -10,7 +10,7 @@
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 3.0, as published by the
  * Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
@@ -79,10 +79,10 @@ enum TF2_GameMode
 
 stock TF2_GameMode:TF2_DetectGameMode()
 {
-	
+
 	// Netprops didn't help, lets check the game type
 	new gameType = GameRules_GetProp("m_nGameType");
-	
+
 	switch (gameType)
 	{
 		case TF2_GameType_Arena:
@@ -456,18 +456,18 @@ LogDebug(bool:Translation, String:text[], any:...)
 // Custom Functions
 // Check If A Client ID Is Valid
 stock bool:IsValidClient(client, bool:nobots = true)
-{ 
+{
     if (client <= 0 || client > MaxClients || !IsClientConnected(client) || (nobots && IsFakeClient(client)))
     {
 #if _DEBUG > 2
 		LogDebug(false, "IsValidClient - Client: %i is invalid? Connected: %b FakeClient: %b", client, IsClientConnected(client), (nobots && IsFakeClient(client)));
 #endif
-        return false; 
+        return false;
     }
 #if _DEBUG > 2
 		LogDebug(false, "IsValidClient - Client: %i should be valid", client);
 #endif
-    return IsClientInGame(client); 
+    return IsClientInGame(client);
 }
 
 AFK_GetClientCount(bool:ExcludeBots, bool:inGameOnly = true)
@@ -480,7 +480,7 @@ AFK_GetClientCount(bool:ExcludeBots, bool:inGameOnly = true)
 		clients = GetClientCount(inGameOnly);
 	}
 	else {
-		for (new i = 1; i <= GetMaxClients(); i++) {	
+		for (new i = 1; i <= GetMaxClients(); i++) {
 			if( ( ( inGameOnly ) ? IsClientInGame( i ) : IsClientConnected( i ) ) && !IsFakeClient( i ) ) {
 				clients++;
 			}
@@ -789,7 +789,7 @@ RegisterCvars()
 #if _DEBUG
 	LogDebug(false, "Running RegisterCvars()");
 #endif
-	hCvarVersion = CreateConVar("sm_afkm_version", AFKM_VERSION, "Current version of the AFK Manager", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD);
+	hCvarVersion = CreateConVar("sm_afkm_version", AFKM_VERSION, "Current version of the AFK Manager", FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD);
 	SetConVarString(hCvarVersion, AFKM_VERSION);
 	hCvarEnabled = CreateConVar("sm_afk_enable", "1", "Is the AFK Manager enabled or disabled? [0 = FALSE, 1 = TRUE, DEFAULT: 1]", 0, true, 0.0, true, 1.0);
 	hCvarAutoUpdate = CreateConVar("sm_afk_autoupdate", "1", "Is the AFK Manager automatic plugin update enabled or disabled? (Requires SourceMod Autoupdate plugin) [0 = FALSE, 1 = TRUE]", 0, true, 0.0, true, 1.0);
@@ -924,7 +924,7 @@ RegisterCmds()
 
 
 // TF2 Arena Round Start Hook
-TF2_HookRoundStart(bool:Arena)
+TF2_HookRoundStart(bool Arena)
 {
 #if _DEBUG
 	LogDebug(false, "TF2_HookRoundStart - Hooking Events");
@@ -1184,7 +1184,7 @@ public CvarChange_AFK(Handle:cvar, const String:oldvalue[], const String:newvalu
 			LogDebug(false, "CvarChange_AFK - Disabling Mod AFK handler.");
 #endif
 			SetConVarInt(cvar, 0);
-	}	
+	}
 }
 
 
@@ -1313,7 +1313,7 @@ public Action:Command_Test(client, args)
 	//PrintToChatAll("Client: %i - Team Number: %i", client, GetEntProp(client, Prop_Send, "m_iTeamNum"));
 	//PrintToChatAll("Client: %i - Team Number: %i", client, GetEntProp(client, Prop_Send, "m_nNextThinkTick", -1));
 	//PrintToChatAll("Client: %i - Team Number: %i", client, GetEntProp(client, Prop_Send, "m_nSimulationTick"));
-	
+
 
 /*
 
@@ -1650,7 +1650,7 @@ AFK_Start()
 	bKickPlayers = CheckPlayerCount(KICK);
 
 #if _DEBUG
-	LogDebug(false, "AFK_Start - Finished Reseting Clients!");	
+	LogDebug(false, "AFK_Start - Finished Reseting Clients!");
 #endif
 }
 
@@ -1682,7 +1682,7 @@ AFK_Stop()
 	}
 
 #if _DEBUG
-	LogDebug(false, "AFK_Stop - Finished Reseting Clients!");	
+	LogDebug(false, "AFK_Stop - Finished Reseting Clients!");
 #endif
 }
 
@@ -1880,7 +1880,7 @@ public Action:Event_PlayerSpawn(Handle:event, const String:name[], bool:dontBroa
 				{
 					// Unassigned Team?
 					return Plugin_Continue;
-				}	
+				}
 			}
 
 			if (!IsClientObserver(client))
@@ -2368,7 +2368,7 @@ bool:CheckSamePosition(client)
 #if _DEBUG > 2
 			LogDebug(false, "CheckSamePosition - Client: %i eyes are no longer in Spawn Position", client);
 #endif
-			ResetSpawn(client);	
+			ResetSpawn(client);
 		}
 	}
 /*
@@ -2389,7 +2389,7 @@ bool:CheckSamePosition(client)
 #if _DEBUG > 2
 			LogDebug(false, "CheckSamePosition - Client: %i is no longer in Spawn Position", client);
 #endif
-			ResetSpawn(client);	
+			ResetSpawn(client);
 		}
 	}
 */
@@ -2398,7 +2398,7 @@ bool:CheckSamePosition(client)
 	LogDebug(false, "CheckSamePosition - Checking Player Eye Angles: Client: %d Old Angle: %f %f %f New Angle: %f %f %f", client, f_Eye_Loc[0], f_Eye_Loc[1], f_Eye_Loc[2], fEyePosition[client][0], fEyePosition[client][1], fEyePosition[client][2]);
 	LogDebug(false, "CheckSamePosition - Checking Player Position: Client: %d Old Position: %f %f %f New Position: %f %f %f", client, f_Map_Loc[0], f_Map_Loc[1], f_Map_Loc[2], fMapPosition[client][0], fMapPosition[client][1], fMapPosition[client][2]);
 #endif
-	
+
 	new Float:Threshold = GetConVarFloat(hCvarLocationThreshold);
 	// Check Location (Origin) now including thresholds.
 	if ((FloatAbs(fMapPosition[client][0] - f_Map_Loc[0]) < Threshold) &&

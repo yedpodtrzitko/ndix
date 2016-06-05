@@ -1,4 +1,10 @@
 /*
+this plugin prevents a few issues related to commander:
+- having multiple commanders
+- disconnected commander without resign stays in the chair
+- add !demote (!mutiny) command to demote the comm
+
+
 CNDCommanderElectionMgr::AddCandidate(CNDPlayer *)
 
 AddCandidate is called by

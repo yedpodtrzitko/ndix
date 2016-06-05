@@ -28,7 +28,7 @@ new Float:g_iVotesNeeded;
 
 public OnPluginStart()
 {
-	g_Cvar_Needed = CreateConVar("sm_surrender_needed", "0.60", "Percentage of players needed to surrender (Def 60%)", 0, true, 0.05, true, 1.0);
+	g_Cvar_Needed = CreateConVar("sm_surrender_needed", "0.6", "Percentage of players needed to surrender (Def 60%)", 0, true, 0.05, true, 1.0);
 	g_Cvar_MinPlayers = CreateConVar("sm_surrender_minplayers", "0", "Number of players required before Surrender will be enabled.", 0, true, 0.0, true, float(MAXPLAYERS));
 	g_Cvar_InitialDelay = CreateConVar("sm_surrender_initialdelay", "300.0", "Time (in seconds) before surrender can be used", 0, true, 0.00);
 	g_iVotesNeeded = GetConVarFloat(g_Cvar_Needed);

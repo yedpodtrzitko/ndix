@@ -33,7 +33,7 @@ public Plugin:myinfo = {
 
 public OnPluginStart() {
     //h_Enabled =CreateConVar("sm_nd_preventsell_enabled", "1", "Flag to (de)activate the plugin");
-    CreateConVar("sm_nd_offmap_version", PLUGIN_VERSION, "ND Offmap Version", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_NOTIFY|FCVAR_DONTRECORD);
+    CreateConVar("sm_nd_offmap_version", PLUGIN_VERSION, "ND Offmap Version", FCVAR_NOTIFY|FCVAR_DONTRECORD);
     HAX = CreateArray(4);
 
 }

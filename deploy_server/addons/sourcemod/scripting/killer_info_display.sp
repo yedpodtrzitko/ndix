@@ -46,27 +46,27 @@ new
 			F O R W A R D   P U B L I C S
 *****************************************************************/
 
-public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max) 
-{ 
-    MarkNativeAsOptional("GetUserMessageType"); 
-    return APLRes_Success; 
+public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
+{
+    MarkNativeAsOptional("GetUserMessageType");
+    return APLRes_Success;
 }
 
 public OnPluginStart()
-{	
+{
 	// ConVars
 	cvVersion = CreateConVar("kid_version", PLUGIN_VERSION, "Killer info display plugin version", FCVAR_DONTRECORD|FCVAR_NOTIFY);
 	// Set it to the correct version, in case the plugin gets updated...
 	SetConVarString(cvVersion, PLUGIN_VERSION);
 
-	cvPrinttochat		= CreateConVar("kid_printtochat",		"1",		"Prints the killer info to the victims chat", FCVAR_PLUGIN);
-	cvPrinttopanel		= CreateConVar("kid_printtopanel",		"1",		"Displays the killer info to the victim as a panel", FCVAR_PLUGIN);
-	cvShowweapon		= CreateConVar("kid_showweapon",		"1",		"Set to 1 to show the weapon the player got killed with, 0 to disable.", FCVAR_PLUGIN);
-	cvShowarmorleft		= CreateConVar("kid_showarmorleft",		"1",		"Set to 0 to disable, 1 to show the armor, 2 to show the suitpower the killer has left.", FCVAR_PLUGIN);
-	cvShowdistance		= CreateConVar("kid_showdistance",		"1",		"Set to 1 to show the distance to the killer, 0 to disable.", FCVAR_PLUGIN);
-	cvDistancetype		= CreateConVar("kid_distancetype",		"meters",	"Set to \"meters\" to show the distance in \"meters\" or \"feet\" for feet.", FCVAR_PLUGIN);
-	cvAnnouncetime		= CreateConVar("kid_announcetime",		"5",		"Time in seconds after an announce about turning killer infos on/off is printed to chat, set to -1 to disable.", FCVAR_PLUGIN);
-	cvDefaultPref		= CreateConVar("kid_defaultpref",		"1",		"Default client preference (0 - killer info display off, 1 - killer info display on)", FCVAR_PLUGIN);
+	cvPrinttochat		= CreateConVar("kid_printtochat",		"1",		"Prints the killer info to the victims chat");
+	cvPrinttopanel		= CreateConVar("kid_printtopanel",		"1",		"Displays the killer info to the victim as a panel");
+	cvShowweapon		= CreateConVar("kid_showweapon",		"1",		"Set to 1 to show the weapon the player got killed with, 0 to disable.");
+	cvShowarmorleft		= CreateConVar("kid_showarmorleft",		"1",		"Set to 0 to disable, 1 to show the armor, 2 to show the suitpower the killer has left.");
+	cvShowdistance		= CreateConVar("kid_showdistance",		"1",		"Set to 1 to show the distance to the killer, 0 to disable.");
+	cvDistancetype		= CreateConVar("kid_distancetype",		"meters",	"Set to \"meters\" to show the distance in \"meters\" or \"feet\" for feet.");
+	cvAnnouncetime		= CreateConVar("kid_announcetime",		"5",		"Time in seconds after an announce about turning killer infos on/off is printed to chat, set to -1 to disable.");
+	cvDefaultPref		= CreateConVar("kid_defaultpref",		"1",		"Default client preference (0 - killer info display off, 1 - killer info display on)");
 
 	HookEvent("player_death", Event_PlayerDeath, EventHookMode_Pre);
 
@@ -75,7 +75,7 @@ public OnPluginStart()
 
 	// add translations support
 	LoadTranslations("killer_info_display.phrases");
-	
+
 	cookiesEnabled = (GetExtensionFileStatus("clientprefs.ext") == 1);
 
 	if (cookiesEnabled) {
@@ -198,7 +198,7 @@ public Action:Timer_Announce(Handle:timer, any:serial)
 }
 
 public Action:Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast)
-{	
+{
 	new client		= GetClientOfUserId(GetEventInt(event, "userid"));
 	new attacker	= GetClientOfUserId(GetEventInt(event, "attacker"));
 	new dominated	= GetEventBool(event, "dominated");
@@ -207,7 +207,7 @@ public Action:Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroa
 	if (client == 0 || attacker == 0 || client == attacker) {
 		return Plugin_Continue;
 	}
-	
+
 	if (!enabledForClient[client]) {
 		return Plugin_Continue;
 	}
@@ -226,7 +226,7 @@ public Action:Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroa
 	new bool:showDistance = GetConVarBool(cvShowdistance);
 	new bool:showWeapon = GetConVarBool(cvShowweapon);
 
-	GetEventString(event, "weapon", weapon, sizeof(weapon));		
+	GetEventString(event, "weapon", weapon, sizeof(weapon));
 	GetConVarString(cvDistancetype, distanceType, sizeof(distanceType));
 
 	if (showArmorLeft > 0) {
@@ -240,9 +240,9 @@ public Action:Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroa
 	}
 
 	if (showDistance) {
-		
+
 		distance = Entity_GetDistance(client, attacker);
-		
+
 		if (StrEqual(distanceType, "feet", false)) {
 			distance = Math_UnitsToFeet(distance);
 			Format(unitType, sizeof(unitType), "%t", "feet");
@@ -255,16 +255,16 @@ public Action:Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroa
 
 	// Print To Chat ?
 	if ((GetConVarBool(cvPrinttochat))) {
-		
+
 		decl
 			String:chat_weapon[64]		= "",
 			String:chat_distance[64]	= "",
 			String:chat_armor[64]		= "";
-			
+
 		if (showWeapon) {
 			Format(chat_weapon, sizeof(chat_weapon), " %t", "chat_weapon", weapon);
 		}
-		
+
 		if (showDistance) {
 			Format(chat_distance, sizeof(chat_distance), " %t", "chat_distance", distance, unitType);
 		}
@@ -317,7 +317,7 @@ public Action:Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroa
 		SetPanelTitle(panel, buffer);
 
 		DrawPanelItem(panel, "", ITEMDRAW_SPACER);
-		
+
 		if (showWeapon) {
 			Format(buffer, sizeof(buffer), "%t", "panel_weapon", weapon);
 			DrawPanelItem(panel, buffer, ITEMDRAW_DEFAULT);
@@ -335,7 +335,7 @@ public Action:Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroa
 			Format(buffer, sizeof(buffer), "%t", "panel_distance", distance, unitType);
 			DrawPanelItem(panel, buffer, ITEMDRAW_DEFAULT);
 		}
-		
+
 		DrawPanelItem(panel, "", ITEMDRAW_SPACER);
 
 		if (dominated) {
@@ -404,7 +404,7 @@ DisplaySettingsMenu(client)
 	SetMenuTitle(prefmenu, MenuItem);
 
 	new String:checked[] = String:0x9A88E2;
-	
+
 	Format(MenuItem, sizeof(MenuItem), "%t [%s]", "enabled", enabledForClient[client] ? checked : "   ");
 	AddMenuItem(prefmenu, "1", MenuItem);
 

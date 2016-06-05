@@ -74,7 +74,7 @@ public OnMapEnd() {
 	activated = false;
 }
 
-public Action:ActivateTeamdiff(Handle timer) {
+public Action ActivateTeamdiff(Handle timer) {
 	activated = true;
 	//CreateTimer(5.0, UpdateTeamDiffLabel, _, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
 	CreateTimer(0.1, UpdateTeamDiffLabel, _, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
@@ -92,9 +92,9 @@ public OnEntityCreated(entity, const String:classname[]){
     }
 }
 
-public Action:OnTakeDamage(victim, &attacker, &inflictor, &Float:damage, &damagetype)
+public Action OnTakeDamage(victim, &attacker, &inflictor, &Float:damage, &damagetype)
 {
-	if (IsClientInGame(attacker))
+	if (1 <= attacker <= MaxClients)
 	{
 		if (GetClientTeam(attacker) == stackedTeam) {
 			damage *= damageMultiplier;
@@ -105,7 +105,7 @@ public Action:OnTakeDamage(victim, &attacker, &inflictor, &Float:damage, &damage
 	return Plugin_Continue;
 }
 
-public Action:UpdateTeamDiffLabel(Handle:timer) {
+public Action UpdateTeamDiffLabel(Handle:timer) {
 	int TeamDiff = GetTeamDiff();
 	char buffer[512];
 	int stackedTeamId;
@@ -164,7 +164,7 @@ GetTeamDiff() {
 	return TeamDiff;
 }
 
-public Action:CMD_TeamDiff(client, args)
+public Action CMD_TeamDiff(client, args)
 {
 	if (!activated) {
 		CreateTimer(0.1, UpdateTeamDiffLabel);

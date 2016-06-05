@@ -13,7 +13,7 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -39,9 +39,9 @@
 
 int g_weapon_stats[MAXPLAYERS+1][MAX_LOG_WEAPONS][15];
 new const String:g_weapon_list[MAX_LOG_WEAPONS][MAX_WEAPON_LEN] = {
-									"avenger", 
+									"avenger",
 									"bag90",
-									"chaingun", 
+									"chaingun",
 									"daisy cutter",
 									"f2000",
 									"grenade launcher",
@@ -57,7 +57,7 @@ new const String:g_weapon_list[MAX_LOG_WEAPONS][MAX_WEAPON_LEN] = {
 									"sp5",
 									"x01",
 									"medpack",
-									"armblade", 
+									"armblade",
 									"mine",
 									"emp grenade",
 									"p12 grenade",
@@ -90,8 +90,8 @@ public Plugin:myinfo = {
 public OnPluginStart()
 {
 	CreatePopulateWeaponTrie();
-	CreateConVar("ndixtats_version", VERSION, NAME, FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY);
-		
+	CreateConVar("ndixtats_version", VERSION, NAME, FCVAR_REPLICATED|FCVAR_NOTIFY);
+
 	HookEvent("player_death", Event_PlayerDeathPre, EventHookMode_Pre);
 	HookEvent("promoted_to_commander", Event_PromotedToCommander);
 	HookEvent("resource_captured", Event_ResourceCaptured);
@@ -120,7 +120,7 @@ public OnMapStart()
 	// GetTeamName gets #ND_Consortium and #ND_Empire in release version -.-. Game logs with CONSORTIUM and EMPIRE translated
 	strcopy(g_team_list[ND_TEAM_CT], sizeof(g_team_list[]), "CONSORTIUM");
 	strcopy(g_team_list[ND_TEAM_EMP], sizeof(g_team_list[]), "EMPIRE");
-	
+
 	g_iBunkerAttacked[0] = 0;
 	g_iBunkerAttacked[1] = 0;
 
@@ -164,15 +164,15 @@ public Action:Event_PlayerDeathPre(Handle event, const char[] name, bool dontBro
 {
 	int victim   = GetClientOfUserId(GetEventInt(event, "userid"));
 	int attacker = GetClientOfUserId(GetEventInt(event, "attacker"));
-	
+
 	char weapon[MAX_WEAPON_LEN];
 	GetEventString(event, "weapon", weapon, sizeof(weapon));
-	
+
 	if (attacker <= 0 || victim <= 0)
 	{
 		return Plugin_Continue;
 	}
-	
+
 	// Which commander ability?!
 	if(StrEqual(weapon, "commander ability"))
 	{
@@ -188,7 +188,7 @@ public Action:Event_PlayerDeathPre(Handle event, const char[] name, bool dontBro
 			SetEventString(event, "weapon", weapon);
 		}
 	}
-	
+
 	if(attacker != victim)
 	{
 		// Check if victim was commander?
@@ -220,19 +220,19 @@ public Hook_PostThink(client)
 {
 	if(!IsPlayerAlive(client))
 		return;
-	
+
 	int iWeapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
 	if(iWeapon == -1 || !IsValidEdict(iWeapon))
 	{
 		g_bReadyToShoot[client] = false;
 		return;
 	}
-	
+
 	char sWeapon[32];
 	GetEdictClassname(iWeapon, sWeapon, sizeof(sWeapon));
 	if(StrContains(sWeapon, "weapon_", false) != 0)
 		return;
-	
+
 	float flNextAttackTime = GetEntPropFloat(iWeapon, Prop_Send, "m_flNextPrimaryAttack");
 	if(flNextAttackTime <= GetGameTime() && GetEntProp(iWeapon, Prop_Send, "m_iClip1") > 0)
 		g_bReadyToShoot[client] = true;
@@ -245,19 +245,19 @@ public Hook_PostThinkPost(client)
 {
 	if(!IsPlayerAlive(client))
 		return;
-	
+
 	int iWeapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
 	if(iWeapon == -1 || !IsValidEdict(iWeapon))
 		return;
-	
+
 	decl String:sWeapon[30];
 	GetEdictClassname(iWeapon, sWeapon, sizeof(sWeapon));
 	if(StrContains(sWeapon, "weapon_", false) != 0)
 		return;
-	
+
 	ReplaceString(sWeapon, sizeof(sWeapon), "weapon_", "", false);
 	FixWeaponLoggingName(sWeapon, sizeof(sWeapon));
-	
+
 	float flNextAttackTime = GetEntPropFloat(iWeapon, Prop_Send, "m_flNextPrimaryAttack");
 	if(g_bReadyToShoot[client] && flNextAttackTime > GetGameTime())
 	{
@@ -281,12 +281,12 @@ public Hook_TraceAttackPost(victim, attacker, inflictor, float damage, damagetyp
 			new String:sWeapon[64];
 			if(iWeapon > 0)
 				GetEdictClassname(iWeapon, sWeapon, sizeof(sWeapon));
-			
+
 			ReplaceString(sWeapon, sizeof(sWeapon), "weapon_", "", false);
 			FixWeaponLoggingName(sWeapon, sizeof(sWeapon));
-			
+
 			new weapon_index = get_weapon_index(sWeapon);
-			
+
 			// player_death
 			if((GetClientHealth(victim) - RoundToCeil(damage)) < 0)
 			{
@@ -317,7 +317,7 @@ public Hook_TraceAttackPost(victim, attacker, inflictor, float damage, damagetyp
 
 public Event_PlayerSpawn(Handle event, const String:name[], bool dontBroadcast)
 {
-	// "userid"        "short"         // user ID on server          
+	// "userid"        "short"         // user ID on server
 
 	int client = GetClientOfUserId(GetEventInt(event, "userid"));
 	if (client > 0)
@@ -357,7 +357,7 @@ public Event_RoundWin(Handle event, const String:name[], bool dontBroadcast)
 		LogTeamEvent(team, "triggered", "round_win");
 		LogTeamEvent(GetOtherTeam(team), "triggered", "round_lose");
 	}
-	
+
 	g_iBunkerAttacked[0] = 0;
 	g_iBunkerAttacked[1] = 0;
 	WstatsDumpAll(PRM);
@@ -388,7 +388,7 @@ public Event_StructureDamageSparse(Handle event, const String:name[], bool dontB
 	if(team >= 2)
 	{
 		g_iBunkerAttacked[team-2]++;
-		
+
 		if(g_iBunkerAttacked[team-2] == BUNKER_DAMAGE_TIMES)
 		{
 			LogTeamEvent(GetOtherTeam(team), "triggered", "damaged_opposite_bunker");
@@ -476,7 +476,7 @@ stock GetOtherTeam(team)
 		return 3;
 	else if(team == 3)
 		return 2;
-	
+
 	return team;
 }
 

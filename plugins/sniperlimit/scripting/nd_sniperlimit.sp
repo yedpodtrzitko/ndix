@@ -86,7 +86,7 @@ public Plugin myinfo = {
 public OnPluginStart() {
     c_Enabled =CreateConVar("sm_maxsnipers_enabled", "1", "Flag to (de)activate the plugin");
     c_Limit = CreateConVar("sm_maxsnipers_limit", "2", "Limit the number of snipers in a team (Default 2)");
-    CreateConVar("sm_maxsnipers_version", PLUGIN_VERSION, "ND Maxsnipers Version", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_NOTIFY|FCVAR_DONTRECORD);
+    CreateConVar("sm_maxsnipers_version", PLUGIN_VERSION, "ND Maxsnipers Version", FCVAR_NOTIFY|FCVAR_DONTRECORD);
 
     RegAdminCmd("sm_maxsnipers_admin", CMD_ChangeSnipersLimit, ADMFLAG_GENERIC, "!maxsnipers_admin <team> <amount>");
     RegConsoleCmd("sm_maxsnipers", CMD_ChangeTeamSnipersLimit, "Change the maximum number of snipers in the team: !maxsnipers <amount>");

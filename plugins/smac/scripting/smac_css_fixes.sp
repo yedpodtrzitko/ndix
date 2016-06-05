@@ -28,21 +28,21 @@ public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 		strcopy(error, err_max, SMAC_MOD_ERROR);
 		return APLRes_SilentFailure;
 	}
-	
+
 	return APLRes_Success;
 }
 
 public OnPluginStart()
 {
 	LoadTranslations("smac.phrases");
-	
+
 	new Handle:hCvar = INVALID_HANDLE;
-	
-	hCvar = SMAC_CreateConVar("smac_css_defusefix", "1", "Block illegal defuses.", FCVAR_PLUGIN, true, 0.0, true, 1.0);
+
+	hCvar = SMAC_CreateConVar("smac_css_defusefix", "1", "Block illegal defuses.", FCVAR_NONE, true, 0.0, true, 1.0);
 	OnDefuseFixChanged(hCvar, "", "");
 	HookConVarChange(hCvar, OnDefuseFixChanged);
-	
-	hCvar = SMAC_CreateConVar("smac_css_respawnfix", "1", "Block players from respawning through rejoins.", FCVAR_PLUGIN, true, 0.0, true, 1.0);
+
+	hCvar = SMAC_CreateConVar("smac_css_respawnfix", "1", "Block players from respawning through rejoins.", FCVAR_NONE, true, 0.0, true, 1.0);
 	OnRespawnFixChanged(hCvar, "", "");
 	HookConVarChange(hCvar, OnRespawnFixChanged);
 
@@ -69,7 +69,7 @@ public OnAllPluginsLoaded()
 	decl String:sBuffer[PLATFORM_MAX_PATH];
 	new Handle:hIter = GetPluginIterator();
 	new Handle:hPlugin = INVALID_HANDLE;
-	
+
 	while (MorePlugins(hIter))
 	{
 		hPlugin = ReadPlugin(hIter);
@@ -79,7 +79,7 @@ public OnAllPluginsLoaded()
 			SetFailState("You must uninstall \"smac_css_antirejoin.smx\" before this module can run.");
 		}
 	}
-	
+
 	CloseHandle(hIter);
 }
 
@@ -110,20 +110,20 @@ public OnDefuseFixChanged(Handle:convar, const String:oldValue[], const String:n
 	{
 		HookEvent("bomb_planted", Event_BombPlanted, EventHookMode_PostNoCopy);
 		HookEvent("bomb_begindefuse", Event_BombBeginDefuse, EventHookMode_Post);
-		
+
 		HookEvent("round_start", Event_ResetDefuser, EventHookMode_PostNoCopy);
 		HookEvent("bomb_abortdefuse", Event_ResetDefuser, EventHookMode_PostNoCopy);
-		
+
 		BombPlanted();
 	}
 	else if (!bNewValue && g_bDefuseFixEnabled)
 	{
 		UnhookEvent("bomb_planted", Event_BombPlanted, EventHookMode_PostNoCopy);
 		UnhookEvent("bomb_begindefuse", Event_BombBeginDefuse, EventHookMode_Post);
-		
+
 		UnhookEvent("round_start", Event_ResetDefuser, EventHookMode_PostNoCopy);
 		UnhookEvent("bomb_abortdefuse", Event_ResetDefuser, EventHookMode_PostNoCopy);
-		
+
 		ClearDefuseData();
 	}
 	g_bDefuseFixEnabled = bNewValue;
@@ -153,9 +153,9 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 		{
 			decl Float:vEyePos[3];
 			GetClientEyePosition(client, vEyePos);
-			
+
 			TR_TraceRayFilter(vEyePos, g_vBombPos, MASK_VISIBLE, RayType_EndPoint, Filter_WorldOnly);
-			
+
 			g_bAllowDefuse[client] = (TR_GetFraction() == 1.0);
 			if (!g_bAllowDefuse[client])
 			{
@@ -165,7 +165,7 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 			g_fNextCheck[client] = GetGameTime() + 2.0;
 		}
 	}
-	
+
 	return Plugin_Continue;
 }
 
@@ -215,7 +215,7 @@ public OnRespawnFixChanged(Handle:convar, const String:oldValue[], const String:
 	{
 		g_hClientSpawned = CreateTrie();
 	}
-	
+
 	new bool:bNewValue = GetConVarBool(convar);
 	if (bNewValue && !g_bRespawnFixEnabled)
 	{
@@ -223,19 +223,19 @@ public OnRespawnFixChanged(Handle:convar, const String:oldValue[], const String:
 		{
 			g_hFreezeTime = FindConVar("mp_freezetime");
 		}
-	
+
 		HookEvent("player_spawn", Event_PlayerSpawn, EventHookMode_Post);
 		HookEvent("round_start", Event_RoundStart, EventHookMode_PostNoCopy);
-		
+
 		AddCommandListener(Command_JoinClass, "joinclass");
 	}
 	else if (!bNewValue && g_bRespawnFixEnabled)
 	{
 		UnhookEvent("player_spawn", Event_PlayerSpawn, EventHookMode_Post);
 		UnhookEvent("round_start", Event_RoundStart, EventHookMode_PostNoCopy);
-		
+
 		RemoveCommandListener(Command_JoinClass, "joinclass");
-		
+
 		ClearSpawnData();
 	}
 	g_bRespawnFixEnabled = bNewValue;
@@ -250,14 +250,14 @@ public Action:Command_JoinClass(client, const String:command[], args)
 {
 	if (!IS_CLIENT(client) || !IsClientInGame(client) || IsFakeClient(client))
 		return Plugin_Continue;
-	
+
 	// Allow users to join empty teams unhindered.
 	new iTeam = GetClientTeam(client);
-	
+
 	if (iTeam > 1 && GetTeamClientCount(iTeam) > 1)
 	{
 		decl String:sAuthID[MAX_AUTHID_LENGTH], dummy;
-		
+
 		if (GetClientAuthString(client, sAuthID, sizeof(sAuthID), false) && GetTrieValue(g_hClientSpawned, sAuthID, dummy))
 		{
 			decl String:sBuffer[64];
@@ -267,7 +267,7 @@ public Action:Command_JoinClass(client, const String:command[], args)
 			{
 				g_iClientClass[client] = 0;
 			}
-			
+
 			FakeClientCommandEx(client, "spec_mode");
 			return Plugin_Handled;
 		}
@@ -285,7 +285,7 @@ public Event_PlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast)
 	{
 		// Fix for warmup/force respawn plugins
 		g_iClientClass[client] = -1;
-		
+
 		// Delay so it doesn't fire before Event_RoundStart
 		CreateTimer(0.01, Timer_PlayerSpawned, userid, TIMER_FLAG_NO_MAPCHANGE);
 	}
@@ -294,7 +294,7 @@ public Event_PlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast)
 public Action:Timer_PlayerSpawned(Handle:timer, any:userid)
 {
 	new client = GetClientOfUserId(userid);
-	
+
 	if (IS_CLIENT(client) && IsClientInGame(client) && !IsFakeClient(client) && GetClientTeam(client) > 1)
 	{
 		decl String:sAuthID[MAX_AUTHID_LENGTH];
@@ -303,7 +303,7 @@ public Action:Timer_PlayerSpawned(Handle:timer, any:userid)
 			SetTrieValue(g_hClientSpawned, sAuthID, true);
 		}
 	}
-	
+
 	return Plugin_Stop;
 }
 
@@ -323,7 +323,7 @@ public Action:Timer_RespawnElapsed(Handle:timer)
 ClearSpawnData()
 {
 	ClearTrie(g_hClientSpawned);
-	
+
 	for (new i = 1; i <= MaxClients; i++)
 	{
 		if (g_iClientClass[i] != -1)
@@ -332,16 +332,16 @@ ClearSpawnData()
 			{
 				FakeClientCommandEx(i, "joinclass %d", g_iClientClass[i]);
 			}
-			
+
 			g_iClientClass[i] = -1;
 		}
 	}
-	
+
 	if (g_hRespawnElapsed != INVALID_HANDLE)
 	{
 		new Handle:hTemp = g_hRespawnElapsed;
 		g_hRespawnElapsed = INVALID_HANDLE;
-		
+
 		CloseHandle(hTemp);
 	}
 }

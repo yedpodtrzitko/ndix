@@ -42,17 +42,17 @@ public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 public OnPluginStart()
 {
 	LoadTranslations("smac.phrases");
-	
+
 	// Convars.
-	g_hCvarKick = SMAC_CreateConVar("smac_kac_kick", "1", "Automatically kick players on the KAC banlist.", FCVAR_PLUGIN, true, 0.0, true, 1.0);
-	
+	g_hCvarKick = SMAC_CreateConVar("smac_kac_kick", "1", "Automatically kick players on the KAC banlist.", FCVAR_NONE, true, 0.0, true, 1.0);
+
 	// Initialize.
 	g_hBanlist = CreateTrie();
-	
+
 	if (g_bLateLoad)
 	{
 		decl String:sAuthID[MAX_AUTHID_LENGTH];
-		
+
 		for (new i = 1; i <= MaxClients; i++)
 		{
 			if (IsClientAuthorized(i) && GetClientAuthString(i, sAuthID, sizeof(sAuthID), false))
@@ -84,33 +84,33 @@ public OnClientAuthorized(client, const String:auth[])
 {
 	if (IsFakeClient(client))
 		return;
-	
+
 	// Workaround for universe digit change on L4D+ engines.
 	decl String:sAuthID[MAX_AUTHID_LENGTH];
 	FormatEx(sAuthID, sizeof(sAuthID), "STEAM_0:%s", auth[8]);
-	
+
 	// Check the cache first.
 	new BanType:banValue = Ban_None;
-	
+
 	if (GetTrieValue(g_hBanlist, sAuthID, banValue))
 	{
 		if (banValue == Ban_KAC && GetConVarBool(g_hCvarKick) && SMAC_CheatDetected(client, Detection_GlobalBanned_KAC, INVALID_HANDLE) == Plugin_Continue)
 		{
 			KickClient(client, "%t", "SMAC_GlobalBanned", "KAC", "www.kigenac.com");
 		}
-		
+
 		return;
 	}
-	
+
 	// Clear a large cache to prevent slowdowns. Shouldn't reach this size anyway.
 	if (GetTrieSize(g_hBanlist) > 50000)
 		ClearTrie(g_hBanlist);
-	
+
 	// Check the banlist.
 	new Handle:hPack = CreateDataPack();
 	WritePackCell(hPack, GetClientUserId(client));
 	WritePackString(hPack, sAuthID);
-	
+
 	new Handle:socket = SocketCreate(SOCKET_TCP, OnSocketError);
 	SocketSetArg(socket, hPack);
 	SocketSetOption(socket, ConcatenateCallbacks, 4096);
@@ -129,22 +129,22 @@ public OnSocketConnected(Handle:socket, any:hPack)
 public OnSocketReceive(Handle:socket, String:data[], const size, any:hPack)
 {
 	SetPackPosition(hPack, 0);
-	
+
 	new client = GetClientOfUserId(ReadPackCell(hPack));
-	
+
 	if (IS_CLIENT(client))
 	{
 		decl String:sAuthID[MAX_AUTHID_LENGTH];
 		ReadPackString(hPack, sAuthID, sizeof(sAuthID));
-		
+
 		if (StrContains(data, "_BAN") != -1)
 		{
 			SetTrieValue(g_hBanlist, sAuthID, Ban_KAC);
-			
+
 			if (SMAC_CheatDetected(client, Detection_GlobalBanned_KAC, INVALID_HANDLE) == Plugin_Continue)
 			{
 				SMAC_PrintAdminNotice("%N | %s | KAC Ban", client, sAuthID);
-				
+
 				if (GetConVarBool(g_hCvarKick))
 				{
 					SMAC_LogAction(client, "was kicked.");

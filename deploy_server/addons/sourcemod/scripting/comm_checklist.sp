@@ -7,22 +7,22 @@
 #define DEBUG					0
 
 //new Handle:g_enabled = INVALID_HANDLE;
-new Handle:g_maxlevel = INVALID_HANDLE;
-new Handle:g_version = INVALID_HANDLE;
-new Handle:g_cVar_hidedone = INVALID_HANDLE;
+Handle g_maxlevel = INVALID_HANDLE;
+Handle g_version = INVALID_HANDLE;
+Handle g_cVar_hidedone = INVALID_HANDLE;
+Handle hudSync;
 new String:checklistTasks[CHECKLIST_ITEM_COUNT][25] = {"BUILD_FWD_SPAWN","RESEARCH_TACTICS","BUILD_ARMORY","RESEARCH_KITS","CHAT_MSG"};
-new Handle:hudSync;
-new PlayerManager;
-new i_maxlevel;
+int PlayerManager;
+int i_maxlevel;
 
 //Commander checklists for each team. Each checklist has one extra field, for 
 //marking whether the comm has seen the thankyou msg after completing all tasks.
-new bool:teamChecklists[MAX_TEAMS][CHECKLIST_ITEM_COUNT+1];
+bool teamChecklists[MAX_TEAMS][CHECKLIST_ITEM_COUNT+1];
 
 //This is mainly for knowing whether the comms are in their chairs,
 //so we can only display the checklist when they're in the chair
-new teamSittingCommanders[MAX_TEAMS];
-new bool:g_hidedone;
+int teamSittingCommanders[MAX_TEAMS];
+bool g_hidedone;
 
 public Plugin:myinfo =
 {
@@ -72,9 +72,9 @@ public OnPluginStart()
 
 public OnMapStart(){
 	//init task arrays
-	for (new idx = 2; idx < MAX_TEAMS; idx++){
+	for (int idx = 2; idx < MAX_TEAMS; idx++){
 		teamSittingCommanders[idx] = -1;
-		for(new idx2 = 0; idx2 < CHECKLIST_ITEM_COUNT+1; idx2++) {
+		for(int idx2 = 0; idx2 < CHECKLIST_ITEM_COUNT+1; idx2++) {
 			teamChecklists[idx][idx2]=false;
 		}
 	}
@@ -100,13 +100,13 @@ public CvarChange_MaxLevel(Handle:cvar, const String:oldvalue[], const String:ne
 }
 */
 
-public Action:OnPlayerChat(Handle:event, const String:name[], bool:dontBroadcast){
-	new client = GetClientOfUserId(GetEventInt(event, "userid"));
+public Action:OnPlayerChat(Handle event, const String:name[], bool dontBroadcast){
+	int client = GetClientOfUserId(GetEventInt(event, "userid"));
 	if (!client) {
 		return Plugin_Continue;
 	}
 
-	new teamId = GetClientTeam(client);
+	int teamId = GetClientTeam(client);
 	#if DEBUG == 1
 		PrintToServer("hooked chat, team %d, client %d, comm %d", teamId, client, teamSittingCommanders[teamId]);
 	#endif

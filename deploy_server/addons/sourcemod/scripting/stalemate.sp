@@ -23,7 +23,7 @@ public Plugin myinfo = {
 }
 
 public OnPluginStart() {
-    CreateConVar("sm_cake_event_version", PLUGIN_VERSION, "ND Stalemate version", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_NOTIFY|FCVAR_DONTRECORD);
+    CreateConVar("sm_cake_event_version", PLUGIN_VERSION, "ND Stalemate version", FCVAR_NOTIFY|FCVAR_DONTRECORD);
 
     HookEvent("round_win", Event_RoundEnd, EventHookMode_Pre);
 }

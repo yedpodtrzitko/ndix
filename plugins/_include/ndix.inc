@@ -1,17 +1,18 @@
+#define ND_TEAM_SPEC 1
 #define ND_TEAM_CN 2
 #define ND_TEAM_EMP 3
 
-stock PrintToChatTeam(iTeam, const String:Message[])
+stock void PrintToChatTeam(iTeam, char[] message)
 {
 	for (new client = 1; client <= MaxClients; client++)
 		if (IsClientInGame(client) && GetClientTeam(client) == iTeam)
-			PrintToChat(client, Message);
+			PrintToChat(client, message);
 }
 
-stock GetTotalNumPlayers()
+stock int GetTotalNumPlayers()
 {
-	new iCount = 0;
-	for (new i = 1; i <= MaxClients; i++) {
+	int iCount = 0;
+	for (int i = 1; i <= MaxClients; i++) {
 		if (IsClientConnected(i) && !IsFakeClient(i)) {
 			iCount++;
         }
@@ -19,7 +20,7 @@ stock GetTotalNumPlayers()
 	return iCount;
 }
 
-stock DemoteComm(int team) {
+stock bool DemoteComm(int team) {
 	bool success = false;
 	int client = GameRules_GetPropEnt("m_hCommanders", (team-2));
 	if (client > -1) {

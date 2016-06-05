@@ -36,14 +36,14 @@ new g_iAttackMax = 66;
 public OnPluginStart()
 {
 	LoadTranslations("smac.phrases");
-	
+
 	// Convars.
-	g_hCvarBan = SMAC_CreateConVar("smac_autotrigger_ban", "0", "Automatically ban players on auto-trigger detections.", FCVAR_PLUGIN, true, 0.0, true, 1.0);
-	
+	g_hCvarBan = SMAC_CreateConVar("smac_autotrigger_ban", "0", "Automatically ban players on auto-trigger detections.", FCVAR_NONE, true, 0.0, true, 1.0);
+
 	// Initialize.
 	g_iAttackMax = RoundToNearest(1.0 / GetTickInterval() / 3.0);
 	CreateTimer(4.0, Timer_DecreaseCount, _, TIMER_REPEAT);
-	
+
 #if defined _updater_included
 	if (LibraryExists("updater"))
 	{
@@ -82,14 +82,14 @@ public Action:Timer_DecreaseCount(Handle:timer)
 			}
 		}
 	}
-	
+
 	return Plugin_Continue;
 }
 
 public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:angles[3], &weapon)
 {
 	static iPrevButtons[MAXPLAYERS+1];
-	
+
 	/* BunnyHop */
 	static Float:fCheckTime[MAXPLAYERS+1];
 
@@ -98,7 +98,7 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 	{
 		fCheckTime[client] = 0.0;
 	}
-	
+
 	// Ignore this jump if the player is in a tight space or stuck in the ground.
 	if ((buttons & IN_JUMP) && !(iPrevButtons[client] & IN_JUMP))
 	{
@@ -106,7 +106,7 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 		if (GetEntityFlags(client) & FL_ONGROUND)
 		{
 			new Float:fGameTime = GetGameTime();
-			
+
 			// Player jumped on the exact frame that allowed it.
 			if (fCheckTime[client] > 0.0 && fGameTime > fCheckTime[client])
 			{
@@ -122,12 +122,12 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 			fCheckTime[client] = 0.0;
 		}
 	}
-	
+
 	/* Auto-Fire */
 	static iAttackAmt[MAXPLAYERS+1];
 	static bool:bResetNext[MAXPLAYERS+1];
-	
-	if (((buttons & IN_ATTACK) && !(iPrevButtons[client] & IN_ATTACK)) || 
+
+	if (((buttons & IN_ATTACK) && !(iPrevButtons[client] & IN_ATTACK)) ||
 		(!(buttons & IN_ATTACK) && (iPrevButtons[client] & IN_ATTACK)))
 	{
 		if (++iAttackAmt[client] >= g_iAttackMax)
@@ -135,7 +135,7 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 			AutoTrigger_Detected(client, METHOD_AUTOFIRE);
 			iAttackAmt[client] = 0;
 		}
-		
+
 		bResetNext[client] = false;
 	}
 	else if (bResetNext[client])
@@ -170,14 +170,14 @@ AutoTrigger_Detected(client, method)
 				strcopy(sMethod, sizeof(sMethod), "Auto-Fire");
 			}
 		}
-		
+
 		new Handle:info = CreateKeyValues("");
 		KvSetString(info, "method", sMethod);
-		
+
 		if (SMAC_CheatDetected(client, Detection_AutoTrigger, info) == Plugin_Continue)
 		{
 			SMAC_PrintAdminNotice("%t", "SMAC_AutoTriggerDetected", client, sMethod);
-			
+
 			if (GetConVarBool(g_hCvarBan))
 			{
 				SMAC_LogAction(client, "was banned for using auto-trigger cheat: %s", sMethod);
@@ -188,9 +188,9 @@ AutoTrigger_Detected(client, method)
 				SMAC_LogAction(client, "is suspected of using auto-trigger cheat: %s", sMethod);
 			}
 		}
-		
+
 		CloseHandle(info);
-		
+
 		g_iDetections[method][client] = 0;
 	}
 }

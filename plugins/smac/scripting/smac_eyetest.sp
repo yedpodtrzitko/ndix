@@ -64,21 +64,21 @@ public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 public OnPluginStart()
 {
 	LoadTranslations("smac.phrases");
-	
+
 	// Convars.
-	g_hCvarBan = SMAC_CreateConVar("smac_eyetest_ban", "0", "Automatically ban players on eye test detections.", FCVAR_PLUGIN, true, 0.0, true, 1.0);
-	g_hCvarCompat = SMAC_CreateConVar("smac_eyetest_compat", "0", "Enable compatibility mode with third-party plugins. This will disable some detection methods.", FCVAR_PLUGIN, true, 0.0, true, 1.0);
-	
+	g_hCvarBan = SMAC_CreateConVar("smac_eyetest_ban", "0", "Automatically ban players on eye test detections.", FCVAR_NONE, true, 0.0, true, 1.0);
+	g_hCvarCompat = SMAC_CreateConVar("smac_eyetest_compat", "0", "Enable compatibility mode with third-party plugins. This will disable some detection methods.", FCVAR_NONE, true, 0.0, true, 1.0);
+
 	// Cache engine version and game type.
 	new EngineVersion:iEngineVersion = GetEngineVersion();
-	
+
 	if (iEngineVersion == Engine_Unknown)
 	{
 		decl String:sGame[64];
 		GetGameFolderName(sGame, sizeof(sGame));
 		SetFailState("Engine Version could not be determined for game: %s", sGame);
 	}
-	
+
 	switch (iEngineVersion)
 	{
 		case Engine_Original, Engine_DarkMessiah, Engine_SourceSDK2006, Engine_SourceSDK2007, Engine_BloodyGoodTime, Engine_EYE:
@@ -94,11 +94,11 @@ public OnPluginStart()
 			g_EngineGroup = Group_L4D2;
 		}
 	}
-	
+
 	// Initialize.
 	g_Game = SMAC_GetGameType();
 	RequireFeature(FeatureType_Capability, FEATURECAP_PLAYERRUNCMD_11PARAMS, "This module requires a newer version of SourceMod.");
-	
+
 	// Check for existing minigun entities on late-load.
 	if (g_bLateLoad && (g_Game == Game_L4D || g_Game == Game_L4D2))
 	{
@@ -111,7 +111,7 @@ public OnPluginStart()
 				OnEntityCreated(i, sClassname);
 			}
 		}
-		
+
 		for (new i = 1; i <= MaxClients; i++)
 		{
 			if (IsClientInGame(i))
@@ -161,43 +161,43 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 	// Ignore bots
 	if (IsFakeClient(client))
 		return Plugin_Continue;
-	
+
 	// NULL commands
 	if (cmdnum <= 0)
 		return Plugin_Handled;
-	
+
 	// Block old cmds after a client resets their tickcount.
 	if (tickcount <= 0)
 		g_TickStatus[client] = State_Resetting;
-	
+
 	// Fixes issues caused by client timeouts.
 	new bool:bAlive = IsPlayerAlive(client);
 	if (!bAlive || !g_bPrevAlive[client] || GetGameTime() <= g_fDetectedTime[client])
 	{
 		g_bPrevAlive[client] = bAlive;
 		g_iPrevButtons[client] = buttons;
-		
+
 		if (g_iPrevCmdNum[client] >= cmdnum)
 		{
 			if (g_TickStatus[client] == State_Resetting)
 				g_TickStatus[client] = State_Reset;
-		
+
 			g_iCmdNumOffset[client]++;
 		}
 		else
 		{
 			if (g_TickStatus[client] == State_Reset)
 				g_TickStatus[client] = State_Okay;
-			
+
 			g_iPrevCmdNum[client] = cmdnum;
 			g_iCmdNumOffset[client] = 1;
 		}
-		
+
 		g_iPrevTickCount[client] = tickcount;
-		
+
 		return Plugin_Continue;
 	}
-	
+
 	// Check for valid cmd values being sent. The command number cannot decrement.
 	if (g_iPrevCmdNum[client] > cmdnum)
 	{
@@ -206,20 +206,20 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 			g_TickStatus[client] = State_Reset;
 			return Plugin_Handled;
 		}
-	
+
 		g_fDetectedTime[client] = GetGameTime() + 30.0;
-		
+
 		new Handle:info = CreateKeyValues("");
 		KvSetNum(info, "cmdnum", cmdnum);
 		KvSetNum(info, "prevcmdnum", g_iPrevCmdNum[client]);
 		KvSetNum(info, "tickcount", tickcount);
 		KvSetNum(info, "prevtickcount", g_iPrevTickCount[client]);
 		KvSetNum(info, "gametickcount", GetGameTickCount());
-		
+
 		if (SMAC_CheatDetected(client, Detection_UserCmdReuse, info) == Plugin_Continue)
 		{
 			SMAC_PrintAdminNotice("%t", "SMAC_EyetestDetected", client);
-			
+
 			if (GetConVarBool(g_hCvarBan))
 			{
 				SMAC_LogAction(client, "was banned for reusing old movement commands. CmdNum: %d PrevCmdNum: %d | [%d:%d:%d]", cmdnum, g_iPrevCmdNum[client], g_iPrevTickCount[client], tickcount, GetGameTickCount());
@@ -230,11 +230,11 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 				SMAC_LogAction(client, "is suspected of reusing old movement commands. CmdNum: %d PrevCmdNum: %d | [%d:%d:%d]", cmdnum, g_iPrevCmdNum[client], g_iPrevTickCount[client], tickcount, GetGameTickCount());
 			}
 		}
-		
+
 		CloseHandle(info);
 		return Plugin_Handled;
 	}
-	
+
 	// Other than the incremented tickcount, nothing should have changed.
 	if (g_iPrevCmdNum[client] == cmdnum)
 	{
@@ -243,22 +243,22 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 			g_TickStatus[client] = State_Reset;
 			return Plugin_Handled;
 		}
-	
+
 		// The tickcount should be incremented.
 		if (g_iPrevTickCount[client]+1 != tickcount)
 		{
 			g_fDetectedTime[client] = GetGameTime() + 30.0;
-			
+
 			new Handle:info = CreateKeyValues("");
 			KvSetNum(info, "cmdnum", cmdnum);
 			KvSetNum(info, "tickcount", tickcount);
 			KvSetNum(info, "prevtickcount", g_iPrevTickCount[client]);
 			KvSetNum(info, "gametickcount", GetGameTickCount());
-			
+
 			if (SMAC_CheatDetected(client, Detection_UserCmdTamperingTickcount, info) == Plugin_Continue)
 			{
 				SMAC_PrintAdminNotice("%t", "SMAC_EyetestDetected", client);
-				
+
 				if (GetConVarBool(g_hCvarBan))
 				{
 					SMAC_LogAction(client, "was banned for tampering with an old movement command (tickcount). CmdNum: %d | [%d:%d:%d]", cmdnum, g_iPrevTickCount[client], tickcount, GetGameTickCount());
@@ -269,16 +269,16 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 					SMAC_LogAction(client, "is suspected of tampering with an old movement command (tickcount). CmdNum: %d | [%d:%d:%d]", cmdnum, g_iPrevTickCount[client], tickcount, GetGameTickCount());
 				}
 			}
-			
+
 			CloseHandle(info);
 			return Plugin_Handled;
 		}
-		
+
 		// Check for specific buttons in order to avoid compatibility issues with server-side plugins.
 		if (!GetConVarBool(g_hCvarCompat) && (AbsValue(g_iPrevButtons[client] - buttons) & (IN_FORWARD|IN_BACK|IN_MOVELEFT|IN_MOVERIGHT|IN_SCORE)))
 		{
 			g_fDetectedTime[client] = GetGameTime() + 30.0;
-			
+
 			new Handle:info = CreateKeyValues("");
 			KvSetNum(info, "cmdnum", cmdnum);
 			KvSetNum(info, "prevbuttons", g_iPrevButtons[client]);
@@ -287,7 +287,7 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 			if (SMAC_CheatDetected(client, Detection_UserCmdTamperingButtons, info) == Plugin_Continue)
 			{
 				SMAC_PrintAdminNotice("%t", "SMAC_EyetestDetected", client);
-				
+
 				if (GetConVarBool(g_hCvarBan))
 				{
 					SMAC_LogAction(client, "was banned for tampering with an old movement command (buttons). CmdNum: %d | [%d:%d]", cmdnum, g_iPrevButtons[client], buttons);
@@ -298,11 +298,11 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 					SMAC_LogAction(client, "is suspected of tampering with an old movement command (buttons). CmdNum: %d | [%d:%d]", cmdnum, g_iPrevButtons[client], buttons);
 				}
 			}
-			
+
 			CloseHandle(info);
 			return Plugin_Handled;
 		}
-		
+
 		// Track so we can predict the next cmdnum.
 		g_iCmdNumOffset[client]++;
 	}
@@ -313,19 +313,19 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 		{
 			seed = GetURandomInt();
 		}
-		
+
 		g_iCmdNumOffset[client] = 1;
 	}
-	
+
 	g_iPrevButtons[client] = buttons;
 	g_iPrevCmdNum[client] = cmdnum;
 	g_iPrevTickCount[client] = tickcount;
-	
+
 	if (g_TickStatus[client] == State_Reset)
 	{
 		g_TickStatus[client] = State_Okay;
 	}
-	
+
 	// Check for valid eye angles.
 	switch (g_EngineGroup)
 	{
@@ -337,7 +337,7 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 				g_bInMinigun[client] = false;
 				return Plugin_Continue;
 			}
-			
+
 			if (g_bInMinigun[client])
 				return Plugin_Continue;
 		}
@@ -352,13 +352,13 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 			// Older engine support.
 			decl Float:vTemp[3];
 			vTemp = angles;
-			
+
 			if (vTemp[0] > 180.0)
 				vTemp[0] -= 360.0;
-			
+
 			if (vTemp[2] > 180.0)
 				vTemp[2] -= 360.0;
-			
+
 			if (vTemp[0] >= -90.0 && vTemp[0] <= 90.0 && vTemp[2] >= -90.0 && vTemp[2] <= 90.0)
 				return Plugin_Continue;
 		}
@@ -368,7 +368,7 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 			return Plugin_Continue;
 		}
 	}
-	
+
 	// Game specific checks.
 	switch (g_Game)
 	{
@@ -396,26 +396,26 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 				return Plugin_Continue;
 		}
 	}
-	
+
 	// Ignore clients that are interacting with the map.
 	new flags = GetEntityFlags(client);
-	
+
 	if (flags & FL_FROZEN || flags & FL_ATCONTROLS)
 		return Plugin_Continue;
-	
+
 	// The client failed all checks.
 	g_fDetectedTime[client] = GetGameTime() + 30.0;
-	
+
 	// Strict bot checking - https://bugs.alliedmods.net/show_bug.cgi?id=5294
 	decl String:sAuthID[MAX_AUTHID_LENGTH];
-	
+
 	new Handle:info = CreateKeyValues("");
 	KvSetVector(info, "angles", angles);
-	
+
 	if (GetClientAuthId(client, AuthId_Steam2, sAuthID, sizeof(sAuthID), false) && !StrEqual(sAuthID, "BOT") && SMAC_CheatDetected(client, Detection_Eyeangles, info) == Plugin_Continue)
 	{
 		SMAC_PrintAdminNotice("%t", "SMAC_EyetestDetected", client);
-		
+
 		if (GetConVarBool(g_hCvarBan))
 		{
 			SMAC_LogAction(client, "was banned for cheating with their eye angles. Eye Angles: %.0f %.0f %.0f", angles[0], angles[1], angles[2]);
@@ -426,7 +426,7 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 			SMAC_LogAction(client, "is suspected of cheating with their eye angles. Eye Angles: %.0f %.0f %.0f", angles[0], angles[1], angles[2]);
 		}
 	}
-	
+
 	CloseHandle(info);
 	return Plugin_Continue;
 }
@@ -435,9 +435,9 @@ public OnEntityCreated(entity, const String:classname[])
 {
 	if (g_Game != Game_L4D && g_Game != Game_L4D2)
 		return;
-	
-	if (StrEqual(classname, "prop_minigun") || 
-		StrEqual(classname, "prop_minigun_l4d1") || 
+
+	if (StrEqual(classname, "prop_minigun") ||
+		StrEqual(classname, "prop_minigun_l4d1") ||
 		StrEqual(classname, "prop_mounted_machine_gun"))
 	{
 		SDKHook(entity, SDKHook_Use, Hook_MinigunUse);
@@ -451,6 +451,6 @@ public Action:Hook_MinigunUse(entity, activator, caller, UseType:type, Float:val
 	{
 		g_bInMinigun[activator] = true;
 	}
-	
+
 	return Plugin_Continue;
 }

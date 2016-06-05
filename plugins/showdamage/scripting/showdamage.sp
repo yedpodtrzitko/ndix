@@ -13,10 +13,10 @@ public Plugin myinfo =
 	url = "www.sourcemod.net"
 }
 
-new player_damage[MAXPLAYERS + 1];
+int player_damage[MAXPLAYERS + 1];
 bool block_timer[MAXPLAYERS + 1] = {false,...};
 char DamageEventName[16];
-new MaxDamage = 10000000;
+int MaxDamage = 10000000;
 bool option_show_damage[MAXPLAYERS + 1] = {true,...};
 Handle cookie_show_damage = INVALID_HANDLE;
 bool ignoredPlayers[MAXPLAYERS + 1] = {false,};
@@ -50,11 +50,11 @@ public void OnPluginStart()
 		DamageEventName = "damage";
 	}
 
-	CreateConVar("sm_show_damage_version", PLUGIN_VERSION, "Show Damage Version", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD);
-	cvar_show_damage = CreateConVar("sm_show_damage", "1", "Enabled/Disabled show damage functionality, 0 = off/1 = on", FCVAR_PLUGIN, true, 0.0, true, 1.0);
-	cvar_show_damage_ff = CreateConVar("sm_show_damage_ff", "0", "Show friendly fire damage, 0 = off/1 = on", FCVAR_PLUGIN, true, 0.0, true, 1.0);
-	cvar_show_damage_own_dmg = CreateConVar("sm_show_damage_own_dmg", "0", "Show your own damage, 0 = off/1 = on", FCVAR_PLUGIN, true, 0.0, true, 1.0);
-	cvar_show_damage_text_area = CreateConVar("sm_show_damage_text_area", "1", "Defines the area for damage text:\n 1 = in the center of the screen\n 2 = in the hint text area \n 3 = in chat area of screen", FCVAR_PLUGIN, true, 1.0, true, 3.0);
+	CreateConVar("sm_show_damage_version", PLUGIN_VERSION, "Show Damage Version", FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD);
+	cvar_show_damage = CreateConVar("sm_show_damage", "1", "Enabled/Disabled show damage functionality, 0 = off/1 = on", FCVAR_NONE, true, 0.0, true, 1.0);
+	cvar_show_damage_ff = CreateConVar("sm_show_damage_ff", "0", "Show friendly fire damage, 0 = off/1 = on", FCVAR_NONE, true, 0.0, true, 1.0);
+	cvar_show_damage_own_dmg = CreateConVar("sm_show_damage_own_dmg", "0", "Show your own damage, 0 = off/1 = on", FCVAR_NONE, true, 0.0, true, 1.0);
+	cvar_show_damage_text_area = CreateConVar("sm_show_damage_text_area", "1", "Defines the area for damage text:\n 1 = in the center of the screen\n 2 = in the hint text area \n 3 = in chat area of screen", FCVAR_NONE, true, 1.0, true, 3.0);
 
 	HookEvent("player_spawn", Event_PlayerSpawn, EventHookMode_Post);
 	HookEvent("player_entered_commander_mode", Event_CommandingStart, EventHookMode_Post);

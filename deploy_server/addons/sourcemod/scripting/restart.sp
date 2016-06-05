@@ -15,11 +15,11 @@ public const Plugin:myinfo = {
 }
 
 public OnPluginStart() {
-	CreateConVar( "sm_autorestart_version", PL_VERSION, "AutoRestart version.", FCVAR_PLUGIN | FCVAR_SPONLY | FCVAR_REPLICATED | FCVAR_NOTIFY );
+	CreateConVar( "sm_autorestart_version", PL_VERSION, "AutoRestart version.", FCVAR_REPLICATED | FCVAR_NOTIFY );
 
-	cvarEnabled = CreateConVar( "sm_autorestart", "1", "Enable AutoRestart.", FCVAR_PLUGIN );
-	cvarTime = CreateConVar( "sm_autorestart_time", "0500", "Time to restart server at.", FCVAR_PLUGIN, true, 0.0, true, 2400.0 );
-	g_Startup = CreateConVar("sm_startup", "0", "This checks to see if the plugin is booting up", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_NOTIFY);
+	cvarEnabled = CreateConVar( "sm_autorestart", "1", "Enable AutoRestart." );
+	cvarTime = CreateConVar( "sm_autorestart_time", "0500", "Time to restart server at.",  FCVAR_NONE , true, 0.0, true, 2400.0 );
+	g_Startup = CreateConVar("sm_startup", "0", "This checks to see if the plugin is booting up", FCVAR_NOTIFY);
 
 	CreateTimer( 300.0, CheckRestart, 0, TIMER_REPEAT );
 }
@@ -72,9 +72,9 @@ public Action:CheckRestart( Handle:timer, any:ignore ) {
 	}
 
 	// Touch autorestart.txt
-	new const Handle:file = OpenFile( path, "w" );
+	Handle file = OpenFile( path, "w" );
 	bool written = false;
-	int closed;
+	bool closed = false;
 
 	if( file != INVALID_HANDLE ) {
 		written = WriteFileString( file, "Don't touch this file", true );

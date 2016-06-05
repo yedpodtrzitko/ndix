@@ -44,18 +44,18 @@ public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 public OnPluginStart()
 {
 	LoadTranslations("smac.phrases");
-	
+
 	// Convars.
-	g_hCvarKick = SMAC_CreateConVar("smac_eac_kick", "1", "Automatically kick players on the EAC banlist.", FCVAR_PLUGIN, true, 0.0, true, 1.0);
-	g_hCvarVAC = SMAC_CreateConVar("smac_eac_vac", "0", "Check players for previous VAC bans.", FCVAR_PLUGIN, true, 0.0, true, 1.0);
-	
+	g_hCvarKick = SMAC_CreateConVar("smac_eac_kick", "1", "Automatically kick players on the EAC banlist.", FCVAR_NONE, true, 0.0, true, 1.0);
+	g_hCvarVAC = SMAC_CreateConVar("smac_eac_vac", "0", "Check players for previous VAC bans.", FCVAR_NONE, true, 0.0, true, 1.0);
+
 	// Initialize.
 	g_hBanlist = CreateTrie();
-	
+
 	if (g_bLateLoad)
 	{
 		decl String:sAuthID[MAX_AUTHID_LENGTH];
-		
+
 		for (new i = 1; i <= MaxClients; i++)
 		{
 			if (IsClientAuthorized(i) && GetClientAuthString(i, sAuthID, sizeof(sAuthID), false))
@@ -87,11 +87,11 @@ public OnClientAuthorized(client, const String:auth[])
 {
 	if (IsFakeClient(client))
 		return;
-	
+
 	// Workaround for universe digit change on L4D+ engines.
 	decl String:sAuthID[MAX_AUTHID_LENGTH];
 	FormatEx(sAuthID, sizeof(sAuthID), "STEAM_0:%s", auth[8]);
-	
+
 	// Check the cache first.
 	new BanType:banValue = Ban_None;
 
@@ -104,19 +104,19 @@ public OnClientAuthorized(client, const String:auth[])
 				KickClient(client, "%t", "SMAC_GlobalBanned", "EAC", "www.EasyAntiCheat.net");
 			}
 		}
-		
+
 		return;
 	}
-	
+
 	// Clear a large cache to prevent slowdowns. Shouldn't reach this size anyway.
 	if (GetTrieSize(g_hBanlist) > 50000)
 		ClearTrie(g_hBanlist);
-	
+
 	// Check the banlist.
 	new Handle:hPack = CreateDataPack();
 	WritePackCell(hPack, GetClientUserId(client));
 	WritePackString(hPack, sAuthID);
-	
+
 	new Handle:socket = SocketCreate(SOCKET_TCP, OnSocketError);
 	SocketSetArg(socket, hPack);
 	SocketSetOption(socket, ConcatenateCallbacks, 4096);
@@ -137,33 +137,33 @@ public OnSocketReceive(Handle:socket, String:data[], const size, any:hPack)
 	decl String:sAuthID[MAX_AUTHID_LENGTH], idx;
 	SetPackPosition(hPack, 8);
 	ReadPackString(hPack, sAuthID, sizeof(sAuthID));
-	
+
 	// Check if we already have the result we needed.
 	if (GetTrieValue(g_hBanlist, sAuthID, idx))
 		return;
-	
+
 	// Make sure we're reading the actual banlist.
 	if ((idx = StrContains(data, "[BEGIN LIST]")) == -1)
 		return;
-	
+
 	// Look for the SteamID.
 	new offset = StrContains(data[idx], sAuthID);
-	
+
 	if (offset == -1)
 	{
 		// Not on the banlist.
 		SetTrieValue(g_hBanlist, sAuthID, Ban_None);
 		return;
 	}
-	
+
 	idx += offset;
-	
+
 	// Get ban info string.
 	new length = FindCharInString(data[idx], '\n') + 1;
-	
+
 	decl String:sBanInfo[length];
 	strcopy(sBanInfo, length, data[idx]);
-	
+
 	// 0 - SteamID
 	// 1 - Ban reason
 	// 2 - Ban date
@@ -171,12 +171,12 @@ public OnSocketReceive(Handle:socket, String:data[], const size, any:hPack)
 	decl String:sBanChunks[4][64];
 	if (ExplodeString(sBanInfo, "|", sBanChunks, sizeof(sBanChunks), sizeof(sBanChunks[])) != 4)
 		return;
-	
+
 	// Check if it's a VAC ban.
 	if (StrEqual(sBanChunks[1], "VAC Banned"))
 	{
 		SetTrieValue(g_hBanlist, sAuthID, Ban_VAC);
-		
+
 		if (!GetConVarBool(g_hCvarVAC))
 			return;
 	}
@@ -184,17 +184,17 @@ public OnSocketReceive(Handle:socket, String:data[], const size, any:hPack)
 	{
 		SetTrieValue(g_hBanlist, sAuthID, Ban_EAC);
 	}
-	
+
 	// Notify and log.
 	SetPackPosition(hPack, 0);
-	
+
 	new client = GetClientOfUserId(ReadPackCell(hPack));
-	
+
 	if (!IS_CLIENT(client) || SMAC_CheatDetected(client, Detection_GlobalBanned_EAC, INVALID_HANDLE) != Plugin_Continue)
 		return;
-	
+
 	SMAC_PrintAdminNotice("%N | %s | EAC: %s", client, sBanChunks[0], sBanChunks[1]);
-	
+
 	if (GetConVarBool(g_hCvarKick))
 	{
 		SMAC_LogAction(client, "was kicked. (Reason: %s | Expires: %s)", sBanChunks[1], sBanChunks[3]);
