@@ -1,6 +1,7 @@
 #pragma semicolon 1
 #include <sourcemod>
 #include <sdktools>
+#include <ndix>
 
 #define NAME "ND Teamdiff"
 #define PLUGIN_VERSION "0.1.0"
@@ -223,7 +224,7 @@ public Action:InGameBalance(Handle:timer, any:stackedTeamId) {
 	if (CountDiff < 0) {
 		swapped = lowPlayer[5 - stackedTeamId][2];
 		if (swapped != -1) {
-			PrintToChat(swapped, "\x04[NDix] You've been chosen to switch because you've a low score");
+			PrintToChat(swapped, "\x04%s You've been chosen to switch because you've a low score", SERVER_NAME_TAG);
 			ChangeClientTeam(swapped, stackedTeamId);
 			DispatchSpawn(swapped);
 		}
@@ -231,7 +232,7 @@ public Action:InGameBalance(Handle:timer, any:stackedTeamId) {
 
 	swapped = lowPlayer[stackedTeamId][2];
 	if (swapped != -1) {
-		PrintToChat(swapped, "\x04[NDix] You've been chosen to switch because you've a low score");
+		PrintToChat(swapped, "\x04%s You've been chosen to switch because you've a low score", SERVER_NAME_TAG);
 		ChangeClientTeam(swapped, (5 - stackedTeamId));
 		DispatchSpawn(swapped);
 	}

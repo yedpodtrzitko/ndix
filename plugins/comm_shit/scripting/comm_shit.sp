@@ -174,13 +174,13 @@ public Action:CMD_Startmutiny(client, args)
 
 	int commander = GameRules_GetPropEnt("m_hCommanders", (team-2));
 	if (commander == -1) {
-		PrintToChat(client, "\x04[NDix] There is no commander to demote");
+		PrintToChat(client, "\x04 %s There is no commander to demote", SERVER_NAME_TAG);
 		return Plugin_Continue;
 	}
 
 	if (commander == client)
 	{
-		PrintToChatAll("\x04[NDix] %N has resigned their command, effective immediately!", commander);
+		PrintToChatAll("\x04 %s %N has resigned their command, effective immediately!", SERVER_NAME_TAG, commander);
 		DemoteComm(team);
 		ResetVotes(team);
 		return Plugin_Continue;
@@ -190,7 +190,7 @@ public Action:CMD_Startmutiny(client, args)
 	Action rv = RecalculateVotes();
 
 	char msg[256];
-	Format(msg, sizeof(msg), "\x04[NDix] %N voted to demote commander via !demote (%d votes, ~%d required)", client, g_TeamVotes[team], g_VotesNeeded[team]);
+	Format(msg, sizeof(msg), "\x04 %s %N voted to demote commander via !demote (%d votes, ~%d required)", SERVER_NAME_TAG, client, g_TeamVotes[team], g_VotesNeeded[team]);
 	PrintToChatTeam(team, msg);
 
 	return rv;

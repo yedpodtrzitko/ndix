@@ -37,6 +37,7 @@
 #include <sdktools>
 #include <colors>
 #include <smlib>
+#include <ndix>
 
 #define PLUGIN_VERSION "0.7.1"
 #define DEBUG 0
@@ -209,7 +210,7 @@ public Action CMD_ChangeSnipersLimit(client, args) {
     }
 
     if (args != 2) {
-        PrintToChat(client, "[NDix] maxsnipers_admin: Invalid number of arguments: <team> <amount>");
+        PrintToChat(client, "%s maxsnipers_admin: Invalid number of arguments: <team> <amount>", SERVER_NAME_TAG);
         return Plugin_Handled;
     }
 
@@ -245,12 +246,12 @@ public Action CMD_ChangeTeamSnipersLimit(client, args) {
     }
 
     if (args == 0) {
-        PrintToChat(client, "[NDix] current snipers limit is %i", LimitValue[client_team]);
+        PrintToChat(client, "%s current snipers limit is %i", SERVER_NAME_TAG, LimitValue[client_team]);
         return Plugin_Handled;
     }
 
     if (GameRules_GetPropEnt("m_hCommanders", (client_team-2)) != client) {
-        PrintToChat(client, "[NDix] snipers limiting is available only for Commander");
+        PrintToChat(client, "%s snipers limiting is available only for Commander", SERVER_NAME_TAG);
         return Plugin_Handled;
     }
 
@@ -289,7 +290,7 @@ void ResetClass(client) {
     SetEntProp(client, Prop_Send, "m_iDesiredPlayerSubclass", ASSAULT_INFANTRY);
     SetEntProp(client, Prop_Send, "m_iDesiredGizmo", 0);
 
-    PrintToChat(client, "[NDix] Snipers limit reached, resetting to Assault");
+    PrintToChat(client, "%s Snipers limit reached, resetting to Assault", SERVER_NAME_TAG);
 }
 
 void ResetLimits() {
@@ -308,7 +309,7 @@ void ChangeSnipersLimit(client, team, value)
 {
 	if (team != 2 && team != 3)
 	{
-		PrintToChat(client, "[NDix] maxsnipers: Invalid team id (0 CON, 1 EMP)");
+		PrintToChat(client, "%s maxsnipers: Invalid team id (0 CON, 1 EMP)", SERVER_NAME_TAG);
 		return;
 	}
 
@@ -325,5 +326,5 @@ void ChangeSnipersLimit(client, team, value)
     #endif
 
 	char teamName[16];
-	PrintToChat(client, "[NDix] %s: snipers limit set to %i", GetTeamName(team, teamName, 16), value);
+	PrintToChat(client, "%s %s: snipers limit set to %i", GetTeamName(team, teamName, 16), SERVER_NAME_TAG, value);
 }

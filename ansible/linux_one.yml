@@ -4,7 +4,7 @@
 
   tasks:
     - name: install python-apt
-      raw: /usr/bin/apt-get -y install python-apt python-dev sudo vim python-pip lib32gcc1 mc gcc python-zmq unzip
+      raw: /usr/bin/apt-get -y install python-apt python-dev sudo vim python-pip lib32gcc1 mc gcc python-zmq unzip lib32stdc++6
       notify: apt cache update
       when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
@@ -17,25 +17,28 @@
       when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
     - name: create Circus dirs
-      file: path=/var/circus/components state=directory
+      file: path=/etc/circus/ state=directory
 
     - name: install Circus
       shell: pip install circus
 
     - name: configure Circus I
-      copy: src=./circus/circus.ini dest=/var/circus/circus.ini
+      copy: src=./circus/circus.ini dest=/etc/circus/circus.ini
 
     - name: configure Circus II
-      copy: src=./circus/ndserver.ini dest=/var/circus/components/ndserver.ini
+      copy: src=./circus/ndserver.ini dest=/etc/circus/components/ndserver.ini
 
     - name: configure Circus III
       copy: src=./circus/etc_circus.conf dest=/etc/init/circus.conf
       when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
-    - name: configure Circus III
+    - name: configure Circus IV
       copy: src=./circus/etc_systemd_circus.conf dest=/etc/systemd/system/circus.service
       when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
+    - name: configure Circus V
+      service: name=circus enabled=yes
+      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
     - name: start Circus
       shell: service circus start || /bin/true
