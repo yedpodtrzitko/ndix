@@ -1,14 +1,14 @@
 ---
 - name: Bootstrap ND server
+  become_user: steam
   hosts: nd
-  sudo: yes
-  sudo_user: steam
-
   vars:
-    mirror: http://www.gsptalk.com/mirror/sourcemod/
-    sourcemod: sourcemod-1.7.1-linux.tar.gz
-    metamod: mmsource-1.10.4-linux.tar.gz
-    steamcmd: http://media.steampowered.com/installer/steamcmd_linux.tar.gz
+    sourcemod_host: http://www.sourcemod.net/smdrop/1.8/
+    sourcemod_file: sourcemod-1.8.0-git5909-linux.tar.gz
+    metamod_host: http://mirror.pointysoftware.net/alliedmodders/
+    metamod_file: mmsource-1.10.6-linux.tar.gz
+    steamcmd: https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz
+
 
   tasks:
     - name: prepare dirs
@@ -22,13 +22,13 @@
       get_url: dest=/home/steam/bin/ url={{ steamcmd }}
 
     - name: get Metamod
-      get_url: dest=/home/steam/tmp/ url={{ mirror }}{{ metamod }}
+      get_url: dest=/home/steam/tmp/ url={{ metamod_host }}{{ metamod_file }}
 
     - name: get SourceMod
-      get_url: dest=/home/steam/tmp/ url={{ mirror }}{{ sourcemod }}
+      get_url: dest=/home/steam/tmp/ url={{ sourcemod_host }}{{ sourcemod_file }}
 
     - name: install Steamcmd
-      shell: tar xzf /home/steam/bin/steamcmd_linux.tar.gz -C /home/steam/bin
+      unarchive: src=/home/steam/bin/steamcmd_linux.tar.gz dest=/home/steam/bin
 
     - name: install ND server
       register: nd_downloaded
@@ -51,11 +51,11 @@
                creates=/home/steam/.steam/sdk32/steamclient.so
 
     - name: install Metamod
-      shell: tar xzf /home/steam/tmp/{{ sourcemod }} -C /home/steam/nd/nucleardawn
+      shell: tar xzf /home/steam/tmp/{{ metamod_file }} -C /home/steam/nd/nucleardawn
       # TODO - if file not exists
 
     - name: install Sourcemod
-      shell: tar xzf /home/steam/tmp/{{ metamod }} -C /home/steam/nd/nucleardawn
+      shell: tar xzf /home/steam/tmp/{{ sourcemod_file }} -C /home/steam/nd/nucleardawn
       # TODO - if file not exists
 
     - name: start server

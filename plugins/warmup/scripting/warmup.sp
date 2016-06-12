@@ -2,6 +2,7 @@
 #include <sourcemod>
 #include <sdktools>
 #include <smlib>
+#include <ndix>
 
 #define NAME "ND Warmup Round"
 #define PLUGIN_VERSION "1.3.1"
@@ -120,7 +121,7 @@ public OnMapStart()
 
 public Action RestrictLow(Handle hTimer, Handle dp) {
 	lowRestricted = false;
-	PrintToChatAll("\x04[NDix] low-level commanders restriction removed");
+	PrintToChatAll("\x04%s low-level commanders restriction removed", SERVER_NAME_TAG);
 }
 
 
@@ -142,7 +143,7 @@ public Action WarmupRoundTimer(Handle timer)
 	if (CountDown == 5 && PluginEnabled)
 	{
 		BalanceTeams();
-		PrintToChatAll("[NDix] Balanced Teams");
+		PrintToChatAll("%s Balanced Teams", SERVER_NAME_TAG);
 	}
 
 	else if (CountDown <= 0)

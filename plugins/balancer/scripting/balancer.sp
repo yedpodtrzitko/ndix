@@ -2,6 +2,7 @@
 #include <sourcemod>
 #include <sdktools>
 #include <smlib>
+#include <ndix>
 
 #define NAME "Team Balancer"
 #define PLUGIN_VERSION "0.1.1"
@@ -87,7 +88,7 @@ public Action:Event_ChangeTeam(Handle:event, const String:name[], bool:dontBroad
 
 	new weakTeam = GetWeakerTeam(client);
 	if (weakTeam != 0) {
-		PrintToChat(client, "\x04[NDix] Assigning to the weaker team.");
+		PrintToChat(client, "\x04%s Assigning to the weaker team.", SERVER_NAME_TAG);
 		ClientCommand(client, "jointeam %i", weakTeam);
 		//ChangeClientTeam(client, weakTeam);
 		return Plugin_Handled;

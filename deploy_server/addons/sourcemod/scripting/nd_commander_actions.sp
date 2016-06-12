@@ -90,12 +90,12 @@ public Action:Cmd_Demote(client, args)
 	}
 	else
 	{
-		ReplyToCommand(client, "[NDix] Unknown argument: %s. Usage: sm_demotecommander <ct | emp>", arg1);
+		ReplyToCommand(client, "%s Unknown argument: %s. Usage: sm_demotecommander <ct | emp>", SERVER_NAME_TAG, arg1);
 		return Plugin_Handled;
 	}
 	
 	if (!DemoteComm(team)) {
-		ReplyToCommand(client, "[NDix] No commander on team %s", arg1);
+		ReplyToCommand(client, "%s No commander on team %s", SERVER_NAME_TAG, arg1);
 	}
 	
 	return Plugin_Handled;

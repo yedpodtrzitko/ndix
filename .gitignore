@@ -1,4 +1,5 @@
-ansible/hosts/_all
+*.retry
 server_cfg/*/server.password
 server_cfg/*/server.cfg
+server_cfg/*/motd.txt
 manage/venv

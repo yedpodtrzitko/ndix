@@ -12,6 +12,7 @@
 
 #include <sourcemod>
 #include <sdkhooks>
+#include <ndix>
 
 #define PLUGIN_VERSION "0.2.1"
 #define DEBUG 0
@@ -55,7 +56,7 @@ public OnMapStart() {
 
     if (GetArraySize(HAX)) {
         validMap = true;
-        PrintToChatAll("\x04[NDix] handling %d location(s) glitches", GetArraySize(HAX));
+        PrintToChatAll("\x04%s handling %d location(s) glitches", SERVER_NAME_TAG, GetArraySize(HAX));
     } else {
         validMap = false;
     }
